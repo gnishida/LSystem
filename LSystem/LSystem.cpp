@@ -53,7 +53,6 @@ LSystem::LSystem() {
 	rules['F'].push_back(pair<double, string>(1.0, "FF"));
 	*/
 
-	/*
 	N = 7;
 	delta = 22.5;
 	axiom = 'A';
@@ -61,32 +60,46 @@ LSystem::LSystem() {
 	rules['F'].push_back(pair<double, string>(1.0, "S/////F"));
 	rules['S'].push_back(pair<double, string>(1.0, "FL"));
 	rules['L'].push_back(pair<double, string>(1.0, "['''^^f]"));
-	*/
 
+	/*
 	N = 5;
 	delta = 25.7;
 	axiom = 'F';
 	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F[-F]F"));
 	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F"));
 	rules['F'].push_back(pair<double, string>(0.34, "F[-F]F"));
+	*/
 
-	random_seed = time(NULL);
+	srand(time(NULL));
+	rule = derive();
+}
+
+string LSystem::derive() {
+	string result(1, axiom);
+	for (int n = 0; n < N; ++n) {
+		string next;
+		for (int i = 0; i < result.length(); ++i) {
+			if (rules.find(result[i]) == rules.end()) {
+				next += result[i];
+			} else {
+				next += chooseRule(rules[result[i]]);
+			}
+		}
+
+		result = next;
+	}
+
+	return result;
 }
 
 void LSystem::draw() {
-	srand(random_seed);
-
-	State state;
-	drawSegment(state, 0, axiom);
+	drawSegment(rule);
 }
 
-void LSystem::drawSegment(State& state, int level, char left_hand) {
+void LSystem::drawSegment(string rule) {
 	std::list<State> listState;
 
-	if (rules.find(left_hand) == rules.end()) return;
-
-	string rule = chooseRule(rules[left_hand]);
-
+	State state;
 	for (int i = 0; i < rule.length(); ++i) {
 		if (rule[i] == '[') {
 			listState.push_back(state);
@@ -113,15 +126,9 @@ void LSystem::drawSegment(State& state, int level, char left_hand) {
 			state.color.g = min(1, state.color.g + 0.2);
 		} else if (rule[i] == 'f') {
 			drawCircle(state.modelMat, 20.0, 4.0, state.color);
-		} else {
-			if (level < N && rules.find(rule[i]) != rules.end()) {
-				drawSegment(state, level + 1, rule[i]);
-			} else {
-				if (rule[i] == 'F') {
-					drawCylinder(state.modelMat, state.radius, state.radius, 5.0, state.color);
-					state.modelMat = glm::translate(state.modelMat, glm::vec3(0, 5.0, 0));
-				}
-			}
+		} else if (rule[i] == 'F') {
+			drawCylinder(state.modelMat, state.radius, state.radius, 5.0, state.color);
+			state.modelMat = glm::translate(state.modelMat, glm::vec3(0, 5.0, 0));
 		}
 	}
 }

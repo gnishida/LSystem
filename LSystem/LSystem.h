@@ -27,14 +27,15 @@ public:
 	double delta;
 	char axiom;
 	map<char, vector<pair<double, string> > > rules;
-	int random_seed;
+	string rule;
 
 public:
 	LSystem();
+	string derive();
 	void draw();
 
 private:
-	void drawSegment(State& state, int level, char left_hand);
+	void drawSegment(string rule);
 	void drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color);
 	void drawCircle(const glm::mat4& modelMat, float length, float width, const glm::vec3& color);
 	string chooseRule(const vector<pair<double, string> >& rules);
