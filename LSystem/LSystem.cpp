@@ -5,28 +5,66 @@
 #define M_PI		3.141592653592
 
 LSystem::LSystem() {
+	/*
 	N = 5;
 	delta = 25.7;
-	rule = "F[+F]F[-F]F";
+	axiom = 'F';
+	rules['F'] = "F[+F]F[-F]F";
+	*/
 
+	/*
+	N = 5;
+	delta = 20;
+	axiom = 'F';
+	rules['F'] = "F[+F]F[-F][F]";
+	*/
+
+	/*
+	N = 4;
+	delta = 22.5;
+	axiom = 'F';
+	rules['F'] = "FF-[-F+F+F]+[+F-F-F]";
+	*/
+
+	/*
+	N = 7;
+	delta = 20;
+	axiom = 'X';
+	rules['X'] = "F[+X]F[-X]+X";
+	rules['F'] = "FF";
+	*/
+
+	/*
+	N = 7;
+	delta = 25.7;
+	axiom = 'X';
+	rules['X'] = "F[+X][-X]FX";
+	rules['F'] = "FF";
+	*/
+
+	N = 5;
+	delta = 22.5;
+	axiom = 'X';
+	rules['X'] = "F-[[X]+X]+F[+FX]-X";
+	rules['F'] = "FF";
 }
 
 void LSystem::draw() {
 	glm::mat4 modelMat;
-	drawSegment(modelMat, 0);
+	drawSegment(modelMat, 0, axiom);
 }
 
-void LSystem::drawSegment(glm::mat4& modelMat, int level) {
+void LSystem::drawSegment(glm::mat4& modelMat, int level, char left_hand) {
 	std::list<glm::mat4> listMat;
+
+	string rule = rules.find(left_hand)->second;
 
 	if (N == level) {
 		drawQuad(modelMat, 1, 1, 5, QColor(0, 255, 0));
 		modelMat = glm::translate(modelMat, glm::vec3(0, 5, 0));
 	} else {
 		for (int i = 0; i < rule.length(); ++i) {
-			if (rule[i] == 'F') {
-				drawSegment(modelMat, level + 1);
-			} else if (rule[i] == '[') {
+			if (rule[i] == '[') {
 				listMat.push_back(modelMat);
 			} else if (rule[i] == ']') {
 				modelMat = listMat.back();
@@ -35,6 +73,8 @@ void LSystem::drawSegment(glm::mat4& modelMat, int level) {
 				modelMat = glm::rotate(modelMat, deg2rad(delta), glm::vec3(0, 0, 1));
 			} else if (rule[i] == '-') {
 				modelMat = glm::rotate(modelMat, deg2rad(-delta), glm::vec3(0, 0, 1));
+			} else {
+				drawSegment(modelMat, level + 1, rule[i]);
 			}
 		}
 	}
