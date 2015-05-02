@@ -52,7 +52,6 @@ LSystem::LSystem() {
 
 	N = 7;
 	delta = 22.5;
-	segment_length = 5.0;
 	axiom = 'A';
 	rules['A'] = "[&F!A]/////'[&F!A]///////'[&F!A]";
 	rules['F'] = "S/////F";
@@ -61,17 +60,19 @@ LSystem::LSystem() {
 
 void LSystem::draw() {
 	glm::mat4 modelMat;
-	drawSegment(modelMat, 0, axiom);
+	drawSegment(modelMat, 0, axiom, 1.0);
 }
 
-void LSystem::drawSegment(glm::mat4& modelMat, int level, char left_hand) {
+void LSystem::drawSegment(glm::mat4& modelMat, int level, char left_hand, double scale) {
 	std::list<glm::mat4> listMat;
 
 	string rule = rules.find(left_hand)->second;
 
 	if (N == level) {
-		drawCylinder(modelMat, 1, 1, segment_length, QColor(0, 255, 0));
-		modelMat = glm::translate(modelMat, glm::vec3(0, segment_length, 0));
+		if (left_hand == 'F') {
+			drawCylinder(modelMat, scale, scale, 5.0 * scale, QColor(0, 255, 0));
+			modelMat = glm::translate(modelMat, glm::vec3(0, 5.0 * scale, 0));
+		}
 	} else {
 		for (int i = 0; i < rule.length(); ++i) {
 			if (rule[i] == '[') {
@@ -84,19 +85,19 @@ void LSystem::drawSegment(glm::mat4& modelMat, int level, char left_hand) {
 			} else if (rule[i] == '-') {
 				modelMat = glm::rotate(modelMat, deg2rad(-delta), glm::vec3(0, 0, 1));
 			} else if (rule[i] == '\\') {
-				modelMat = glm::rotate(modelMat, deg2rad(delta), glm::vec3(1, 0, 0));
-			} else if (rule[i] == '/') {
-				modelMat = glm::rotate(modelMat, deg2rad(-delta), glm::vec3(1, 0, 0));
-			} else if (rule[i] == '&') {
 				modelMat = glm::rotate(modelMat, deg2rad(delta), glm::vec3(0, 1, 0));
-			} else if (rule[i] == '^') {
+			} else if (rule[i] == '/') {
 				modelMat = glm::rotate(modelMat, deg2rad(-delta), glm::vec3(0, 1, 0));
+			} else if (rule[i] == '&') {
+				modelMat = glm::rotate(modelMat, deg2rad(-delta), glm::vec3(1, 0, 0));
+			} else if (rule[i] == '^') {
+				modelMat = glm::rotate(modelMat, deg2rad(delta), glm::vec3(1, 0, 0));
 			} else if (rule[i] == '!') {
-				segment_length *= 0.5;
+				scale *= 0.9;
 			} else if (rule[i] == '\'') {
 
 			} else {
-				drawSegment(modelMat, level + 1, rule[i]);
+				drawSegment(modelMat, level + 1, rule[i], scale);
 			}
 		}
 	}
