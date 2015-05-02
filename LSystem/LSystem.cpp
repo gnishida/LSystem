@@ -1,6 +1,7 @@
 ﻿#include "LSystem.h"
 #include <QGLWidget>
 #include <iostream>
+#include <time.h>
 
 namespace lsystem {
 
@@ -11,59 +12,71 @@ LSystem::LSystem() {
 	N = 5;
 	delta = 25.7;
 	axiom = 'F';
-	rules['F'] = "F[+F]F[-F]F";
+	rules['F'].push_back(pair<double, string>(1.0, "F[+F]F[-F]F"));
 	*/
 
 	/*
 	N = 5;
 	delta = 20;
 	axiom = 'F';
-	rules['F'] = "F[+F]F[-F][F]";
+	rules['F'].push_back(pair<double, string>(1.0, "F[+F]F[-F][F]"));
 	*/
 
 	/*
 	N = 4;
 	delta = 22.5;
 	axiom = 'F';
-	rules['F'] = "FF-[-F+F+F]+[+F-F-F]";
+	rules['F'].push_back(pair<double, string>(1.0, "FF-[-F+F+F]+[+F-F-F]"));
 	*/
 
 	/*
 	N = 7;
 	delta = 20;
 	axiom = 'X';
-	rules['X'] = "F[+X]F[-X]+X";
-	rules['F'] = "FF";
+	rules['X'].push_back(pair<double, string>(1.0, "F[+X]F[-X]+X"));
+	rules['F'].push_back(pair<double, string>(1.0, "FF"));
 	*/
 
 	/*
 	N = 7;
 	delta = 25.7;
 	axiom = 'X';
-	rules['X'] = "F[+X][-X]FX";
-	rules['F'] = "FF";
+	rules['X'].push_back(pair<double, string>(1.0, "F[+X][-X]FX"));
+	rules['F'].push_back(pair<double, string>(1.0, "FF"));
 	*/
 
 	/*
 	N = 5;
 	delta = 22.5;
 	axiom = 'X';
-	rules['X'] = "F-[[X]+X]+F[+FX]-X";
-	rules['F'] = "FF";
+	rules['X'].push_back(pair<double, string>(1.0, "F-[[X]+X]+F[+FX]-X"));
+	rules['F'].push_back(pair<double, string>(1.0, "FF"));
 	*/
 
+	/*
 	N = 7;
 	delta = 22.5;
 	axiom = 'A';
-	rules['A'] = "[&FL!A]/////'[&FL!A]///////'[&FL!A]";
-	rules['F'] = "S/////F";
-	rules['S'] = "FL";
-	rules['L'] = "['''^^f]";
+	rules['A'].push_back(pair<double, string>(1.0, "[&FL!A]/////'[&FL!A]///////'[&FL!A]"));
+	rules['F'].push_back(pair<double, string>(1.0, "S/////F"));
+	rules['S'].push_back(pair<double, string>(1.0, "FL"));
+	rules['L'].push_back(pair<double, string>(1.0, "['''^^f]"));
+	*/
+
+	N = 5;
+	delta = 25.7;
+	axiom = 'F';
+	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F[-F]F"));
+	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F"));
+	rules['F'].push_back(pair<double, string>(0.34, "F[-F]F"));
+
+	random_seed = time(NULL);
 }
 
 void LSystem::draw() {
+	srand(random_seed);
+
 	State state;
-	//glm::mat4 modelMat;
 	drawSegment(state, 0, axiom);
 }
 
@@ -72,7 +85,7 @@ void LSystem::drawSegment(State& state, int level, char left_hand) {
 
 	if (rules.find(left_hand) == rules.end()) return;
 
-	string rule = rules.find(left_hand)->second;
+	string rule = chooseRule(rules[left_hand]);
 
 	for (int i = 0; i < rule.length(); ++i) {
 		if (rule[i] == '[') {
@@ -204,6 +217,33 @@ void LSystem::drawCircle(const glm::mat4& modelMat, float length, float width, c
 		glVertex3f(p2.x, p2.y, p2.z);
 	}
 	glEnd();
+}
+
+/**
+ * ルールリストから、確率に基づいて１つのルールを選択する。
+ * リストの各要素は、<確率、ルール>のペアとなっている。
+ *
+ * @param rules		ルールリスト
+ * @reutnr			選択されたルール
+ */
+string LSystem::chooseRule(const vector<pair<double, string> >& rules) {
+	vector<double> cdf;
+	{
+		double total = 0.0;
+		for (int i = 0; i < rules.size(); ++i) {
+			total += rules[i].first;
+			cdf.push_back(total);
+		}
+	}
+
+	double rnd = (double)rand() / (RAND_MAX + 1) * cdf.back();
+	for (int i = 0; i < cdf.size(); ++i) {
+		if (rnd <= cdf[i]) {
+			return rules[i].second;
+		}
+	}
+
+	return rules.back().second;
 }
 
 float LSystem::deg2rad(float deg) {

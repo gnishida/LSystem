@@ -18,7 +18,7 @@ public:
 	glm::vec3 color;
 
 public:
-	State() : radius(1.0), color(0, 0.2, 0) {};
+	State() : radius(1.0), color(0, 0.7, 0) {};
 };
 
 class LSystem {
@@ -26,7 +26,8 @@ public:
 	int N;
 	double delta;
 	char axiom;
-	map<char, string> rules;
+	map<char, vector<pair<double, string> > > rules;
+	int random_seed;
 
 public:
 	LSystem();
@@ -36,6 +37,7 @@ private:
 	void drawSegment(State& state, int level, char left_hand);
 	void drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color);
 	void drawCircle(const glm::mat4& modelMat, float length, float width, const glm::vec3& color);
+	string chooseRule(const vector<pair<double, string> >& rules);
 	float deg2rad(float deg);
 };
 
