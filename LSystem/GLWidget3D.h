@@ -15,7 +15,7 @@ public:
 	MainWindow* mainWin;
 	Camera camera;
 	QPoint lastPos;
-	LSystem lsystem;
+	lsystem::LSystem lsystem;
 
 public:
 	GLWidget3D(MainWindow *parent);

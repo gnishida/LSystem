@@ -6,8 +6,8 @@
 
 GLWidget3D::GLWidget3D(MainWindow* mainWin) : QGLWidget(QGLFormat(QGL::SampleBuffers), (QWidget*)mainWin) {
 	this->mainWin = mainWin;
-	camera.dz = 100;
-	camera.dy = 50;
+	camera.dz = 400;
+	camera.dy = 200;
 }
 
 /**
