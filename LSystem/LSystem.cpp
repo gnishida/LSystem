@@ -95,9 +95,9 @@ void LSystem::drawSegment(State& state, int level, char left_hand) {
 		} else if (rule[i] == '|') {
 			state.modelMat = glm::rotate(state.modelMat, deg2rad(180), glm::vec3(0, 0, 1));
 		} else if (rule[i] == '!') {
-			state.radius *= 0.9;
+			state.radius *= 0.7;
 		} else if (rule[i] == '\'') {
-
+			state.color.g = min(1, state.color.g + 0.2);
 		} else if (rule[i] == 'f') {
 			drawCircle(state.modelMat, 20.0, 4.0, state.color);
 		} else {
