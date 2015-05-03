@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LSystem", "LSystem\LSystem.vcxproj", "{621A428B-B3B9-4E5A-9C6C-EF784026B453}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParametricLSystem", "ParametricLSystem\ParametricLSystem.vcxproj", "{74352DA0-3EE8-4439-99A0-87D9C4B90A08}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,14 @@ Global
 		{621A428B-B3B9-4E5A-9C6C-EF784026B453}.Release|Win32.Build.0 = Release|Win32
 		{621A428B-B3B9-4E5A-9C6C-EF784026B453}.Release|x64.ActiveCfg = Release|x64
 		{621A428B-B3B9-4E5A-9C6C-EF784026B453}.Release|x64.Build.0 = Release|x64
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Debug|Win32.ActiveCfg = Debug|Win32
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Debug|Win32.Build.0 = Debug|Win32
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Debug|x64.ActiveCfg = Debug|x64
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Debug|x64.Build.0 = Debug|x64
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Release|Win32.ActiveCfg = Release|Win32
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Release|Win32.Build.0 = Release|Win32
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Release|x64.ActiveCfg = Release|x64
+		{74352DA0-3EE8-4439-99A0-87D9C4B90A08}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

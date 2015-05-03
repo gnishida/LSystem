@@ -1,88 +1,122 @@
-﻿#include "LSystem.h"
+﻿#include "ParametricLSystem.h"
 #include <QGLWidget>
 #include <iostream>
 #include <time.h>
+#include "Eval.h"
+#include <algorithm>
 
-namespace lsystem {
+namespace parametriclsystem {
 
 const double M_PI = 3.141592653592;
 
-LSystem::LSystem() {
-	/*
-	N = 5;
-	delta = 25.7;
-	axiom = 'F';
-	rules['F'].push_back(pair<double, string>(1.0, "F[+F]F[-F]F"));
-	*/
+Rule::Rule(const string& left_hand, const string& condition, const string& right_hand) {
+	int index1 = left_hand.find('(');
+	int index2 = left_hand.find(')');
 
-	/*
-	N = 5;
-	delta = 20;
-	axiom = 'F';
-	rules['F'].push_back(pair<double, string>(1.0, "F[+F]F[-F][F]"));
-	*/
+	string arg = left_hand.substr(index1 + 1, index2 - index1 - 1);
+	vector<string> arg_list = split(arg, ',');
+	for (int i = 0; i < arg_list.size(); ++i) {
+		variables.push_back(arg_list[i]);
+	}
 
-	/*
-	N = 4;
-	delta = 22.5;
-	axiom = 'F';
-	rules['F'].push_back(pair<double, string>(1.0, "FF-[-F+F+F]+[+F-F-F]"));
-	*/
+	this->left_hand = left_hand.substr(0, index1);
+	this->condition = condition;
+	this->right_hand = right_hand;
+}
 
-	/*
-	N = 7;
-	delta = 20;
-	axiom = 'X';
-	rules['X'].push_back(pair<double, string>(1.0, "F[+X]F[-X]+X"));
-	rules['F'].push_back(pair<double, string>(1.0, "FF"));
-	*/
+bool Rule::isTrue(const vector<double>& values) {
+	string cond = this->condition;
+	for (int i = 0; i < variables.size(); ++i) {
+		replaceAll(cond, variables[i], to_string((long double)values[i]));
+	}
+	return eval::compare(cond);
+}
 
-	/*
-	N = 7;
-	delta = 25.7;
-	axiom = 'X';
-	rules['X'].push_back(pair<double, string>(1.0, "F[+X][-X]FX"));
-	rules['F'].push_back(pair<double, string>(1.0, "FF"));
-	*/
+string Rule::derive(const string arg) {
+	vector<string> arg_list = split(arg, ',');
+	vector<double> values;
+	for (int i = 0; i < arg_list.size(); ++i) {
+		values.push_back(stof(arg_list[i]));
+	}
 
-	/*
-	N = 5;
-	delta = 22.5;
-	axiom = 'X';
-	rules['X'].push_back(pair<double, string>(1.0, "F-[[X]+X]+F[+FX]-X"));
-	rules['F'].push_back(pair<double, string>(1.0, "FF"));
-	*/
+	return derive(values);
+}
 
-	/*
-	N = 7;
-	delta = 22.5;
-	axiom = 'A';
-	rules['A'].push_back(pair<double, string>(1.0, "[&FL!A]/////'[&FL!A]///////'[&FL!A]"));
-	rules['F'].push_back(pair<double, string>(1.0, "S/////F"));
-	rules['S'].push_back(pair<double, string>(1.0, "FL"));
-	rules['L'].push_back(pair<double, string>(1.0, "['''^^f]"));
-	*/
+string Rule::derive(const vector<double>& values) {
+	string r = right_hand;
+	for (int i = 0; i < variables.size(); ++i) {
+		replaceAll(r, variables[i], to_string((long double)values[i]));
+	}
 
-	N = 5;
-	delta = 25.7;
-	axiom = 'F';
-	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F[-F]F"));
-	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F"));
-	rules['F'].push_back(pair<double, string>(0.34, "F[-F]F"));
+	string r2;
+	char c;
+	for (int i = 0; i < r.length(); ) {
+		if (r[i] == '[') {
+			r2 += r[i++];
+		} else if (r[i] == ']') {
+			r2 += r[i++];
+		} else if (r[i] == '+') {
+			r2 += r[i++];
+		} else if (r[i] == '-') {
+			r2 += r[i++];
+		} else if (r[i] == '\\') {
+			r2 += r[i++];
+		} else if (r[i] == '/') {
+			r2 += r[i++];
+		} else if (r[i] == '&') {
+			r2 += r[i++];
+		} else if (r[i] == '^') {
+			r2 += r[i++];
+		} else if (r[i] == '|') {
+			r2 += r[i++];
+		} else if (r[i] == '!') {
+			r2 += r[i++];
+		} else if (r[i] == '\'') {
+			r2 += r[i++];
+		} else if ((r[i] >= 'A' && r[i] <= 'Z') || (r[i] >= 'a' && r[i] <= 'z')) {
+			r2 += r[i++];
+		} else if (r[i] == '(') {
+			r2 += '(';
+			int index = r.find(')', i + 1);
+			string arg = r.substr(i + 1, index - i - 1);
+			vector<string> vec_arg = split(arg, ',');
+			for (int j = 0; j < vec_arg.size(); ++j) {
+				r2 += to_string((long double)eval::calculate(vec_arg[j]));
+			}
+			r2 += ')';
+			i = index + 1;
+		}
+	}
+
+	return r2;
+}
+
+ParametricLSystem::ParametricLSystem() {
+	axiom = "F(1)";
+	N = 1;
+	rules['F'] = Rule("F(x)", "x>0.1", "F(x*0.5)[+F(x*0.3)]F(x*0.3)[-F(x*0.2)]F(x*0.2)");
 
 	srand(time(NULL));
 	rule = derive();
+	cout << rule << endl;
 }
 
-string LSystem::derive() {
-	string result(1, axiom);
+string ParametricLSystem::derive() {
+	string result = axiom;
 	for (int n = 0; n < N; ++n) {
 		string next;
-		for (int i = 0; i < result.length(); ++i) {
-			if (rules.find(result[i]) == rules.end()) {
-				next += result[i];
+		for (int i = 0; i < result.length(); ) {
+			if (result[i] >= 'A' && result[i] <= 'Z' && rules.find(result[i]) != rules.end()) {
+				int index1 = result.find('(', i + 1);
+				int index2 = result.find(')', i + 1);
+
+				string arg = result.substr(index1 + 1, index2 - index1 - 1);
+
+				next += rules[result[i]].derive(arg);
+
+				i = index2 + 1;
 			} else {
-				next += chooseRule(rules[result[i]]);
+				next += result[i++];
 			}
 		}
 
@@ -92,11 +126,11 @@ string LSystem::derive() {
 	return result;
 }
 
-void LSystem::draw() {
+void ParametricLSystem::draw() {
 	drawSegment(rule);
 }
 
-void LSystem::drawSegment(string rule) {
+void ParametricLSystem::drawSegment(string rule) {
 	std::list<State> listState;
 
 	State state;
@@ -127,8 +161,12 @@ void LSystem::drawSegment(string rule) {
 		} else if (rule[i] == 'f') {
 			drawCircle(state.modelMat, 20.0, 4.0, state.color);
 		} else if (rule[i] == 'F') {
-			drawCylinder(state.modelMat, state.radius, state.radius, 5.0, state.color);
-			state.modelMat = glm::translate(state.modelMat, glm::vec3(0, 5.0, 0));
+			int index1 = rule.find('(', i + 1);
+			int index2 = rule.find(')', i + 1);
+			double length = stof(rule.substr(index1 + 1, index2 - index1 - 1));
+			drawCylinder(state.modelMat, state.radius, state.radius, length, state.color);
+			state.modelMat = glm::translate(state.modelMat, glm::vec3(0, length, 0));
+			i = index2;
 		}
 	}
 }
@@ -142,7 +180,7 @@ void LSystem::drawSegment(string rule) {
  * @height			円筒形の高さ
  * @color			色
  */
-void LSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color) {
+void ParametricLSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color) {
 	int slices = 12;
 
 	glBegin(GL_TRIANGLES);
@@ -196,7 +234,7 @@ void LSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float ba
  * @width			楕円のX軸方向の直径
  * @color			色
  */
-void LSystem::drawCircle(const glm::mat4& modelMat, float length, float width, const glm::vec3& color) {
+void ParametricLSystem::drawCircle(const glm::mat4& modelMat, float length, float width, const glm::vec3& color) {
 	int slices = 12;
 
 	glm::mat4 mat = glm::translate(modelMat, glm::vec3(0, length * 0.5, 0));
@@ -233,7 +271,7 @@ void LSystem::drawCircle(const glm::mat4& modelMat, float length, float width, c
  * @param rules		ルールリスト
  * @reutnr			選択されたルール
  */
-string LSystem::chooseRule(const vector<pair<double, string> >& rules) {
+string ParametricLSystem::chooseRule(const vector<pair<double, string> >& rules) {
 	vector<double> cdf;
 	{
 		double total = 0.0;
@@ -253,8 +291,27 @@ string LSystem::chooseRule(const vector<pair<double, string> >& rules) {
 	return rules.back().second;
 }
 
-float LSystem::deg2rad(float deg) {
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    std::string::size_type pos = 0;
+    while(pos = str.find(from, pos), pos != std::string::npos) {
+        str.replace(pos, from.length(), to);
+        pos += to.length();
+    }
+}
+
+float deg2rad(float deg) {
 	return deg * M_PI / 180.0;
+}
+
+std::vector<std::string> split(const string& str, char delim) {
+	std::vector<std::string> res;
+	size_t current = 0, found;
+	while ((found = str.find_first_of(delim, current)) != string::npos) {
+		res.push_back(string(str, current, found - current));
+		current = found + 1;
+	}
+	res.push_back(string(str, current, str.size() - current));
+	return res;
 }
 
 }
