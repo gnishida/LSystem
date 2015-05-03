@@ -17,7 +17,7 @@ public:
 	glm::vec3 color;
 
 public:
-	State() : radius(1.0), color(0, 0.7, 0) {};
+	State() : radius(0.3), color(0, 0.7, 0) {};
 };
 
 class Rule {
@@ -59,5 +59,6 @@ private:
 void replaceAll(string& str, const string& from, const string& to);
 float deg2rad(float deg);
 vector<string> split(const string& str, char delim);
+double extractArgument(const string& str, int startIndex, int& nextIndex);
 
 }

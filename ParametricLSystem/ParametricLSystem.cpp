@@ -51,40 +51,21 @@ string Rule::derive(const vector<double>& values) {
 	string r2;
 	char c;
 	for (int i = 0; i < r.length(); ) {
-		if (r[i] == '[') {
-			r2 += r[i++];
-		} else if (r[i] == ']') {
-			r2 += r[i++];
-		} else if (r[i] == '+') {
-			r2 += r[i++];
-		} else if (r[i] == '-') {
-			r2 += r[i++];
-		} else if (r[i] == '\\') {
-			r2 += r[i++];
-		} else if (r[i] == '/') {
-			r2 += r[i++];
-		} else if (r[i] == '&') {
-			r2 += r[i++];
-		} else if (r[i] == '^') {
-			r2 += r[i++];
-		} else if (r[i] == '|') {
-			r2 += r[i++];
-		} else if (r[i] == '!') {
-			r2 += r[i++];
-		} else if (r[i] == '\'') {
-			r2 += r[i++];
-		} else if ((r[i] >= 'A' && r[i] <= 'Z') || (r[i] >= 'a' && r[i] <= 'z')) {
-			r2 += r[i++];
-		} else if (r[i] == '(') {
+		if (r[i] == '(') {
 			r2 += '(';
 			int index = r.find(')', i + 1);
 			string arg = r.substr(i + 1, index - i - 1);
 			vector<string> vec_arg = split(arg, ',');
 			for (int j = 0; j < vec_arg.size(); ++j) {
+				if (j > 0) {
+					r2 += ",";
+				}
 				r2 += to_string((long double)eval::calculate(vec_arg[j]));
 			}
 			r2 += ')';
 			i = index + 1;
+		} else {
+			r2 += r[i++];
 		}
 	}
 
@@ -92,9 +73,13 @@ string Rule::derive(const vector<double>& values) {
 }
 
 ParametricLSystem::ParametricLSystem() {
-	axiom = "F(1)";
-	N = 1;
-	rules['F'] = Rule("F(x)", "x>0.1", "F(x*0.5)[+F(x*0.3)]F(x*0.3)[-F(x*0.2)]F(x*0.2)");
+	axiom = "A(1,10)";
+	N = 10;
+	delta = 65;
+	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(45)B(l*0.6,w*0.707)]/(137.5)A(l*0.9,w*0.707)");
+	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[-(45)$C(l*0.6,w*0.707)]C(l*0.9,w*0.707)");
+	rules['C'] = Rule("C(l,w)", "*", "!(w)F(l)[+(45)$B(l*0.6,w*0.707)]B(l*0.9,w*0.707)");
+	//rules['F'] = Rule("F(x)", "x>0.1", "F(x*0.3)[+F(x*0.45)]F(x*0.25)[-F(x*0.35)]F(x*0.2)[+F(x*0.25)]F(x*0.15)[-F(x*0.1)]F(x*0.1)");
 
 	srand(time(NULL));
 	rule = derive();
@@ -134,39 +119,54 @@ void ParametricLSystem::drawSegment(string rule) {
 	std::list<State> listState;
 
 	State state;
-	for (int i = 0; i < rule.length(); ++i) {
+	for (int i = 0; i < rule.length(); ) {
 		if (rule[i] == '[') {
 			listState.push_back(state);
+			i++;
 		} else if (rule[i] == ']') {
 			state = listState.back();
 			listState.pop_back();
+			i++;
 		} else if (rule[i] == '+') {
-			state.modelMat = glm::rotate(state.modelMat, deg2rad(delta), glm::vec3(0, 0, 1));
+			state.modelMat = glm::rotate(state.modelMat, deg2rad(extractArgument(rule, i + 1, i)), glm::vec3(0, 0, 1));
 		} else if (rule[i] == '-') {
-			state.modelMat = glm::rotate(state.modelMat, deg2rad(-delta), glm::vec3(0, 0, 1));
+			state.modelMat = glm::rotate(state.modelMat, deg2rad(-extractArgument(rule, i + 1, i)), glm::vec3(0, 0, 1));
 		} else if (rule[i] == '\\') {
-			state.modelMat = glm::rotate(state.modelMat, deg2rad(delta), glm::vec3(0, 1, 0));
+			state.modelMat = glm::rotate(state.modelMat, deg2rad(extractArgument(rule, i + 1, i)), glm::vec3(0, 1, 0));
 		} else if (rule[i] == '/') {
-			state.modelMat = glm::rotate(state.modelMat, deg2rad(-delta), glm::vec3(0, 1, 0));
+			state.modelMat = glm::rotate(state.modelMat, deg2rad(-extractArgument(rule, i + 1, i)), glm::vec3(0, 1, 0));
 		} else if (rule[i] == '&') {
-			state.modelMat = glm::rotate(state.modelMat, deg2rad(delta), glm::vec3(1, 0, 0));
+			state.modelMat = glm::rotate(state.modelMat, deg2rad(extractArgument(rule, i + 1, i)), glm::vec3(1, 0, 0));
 		} else if (rule[i] == '^') {
-			state.modelMat = glm::rotate(state.modelMat, deg2rad(-delta), glm::vec3(1, 0, 0));
+			state.modelMat = glm::rotate(state.modelMat, deg2rad(-extractArgument(rule, i + 1, i)), glm::vec3(1, 0, 0));
 		} else if (rule[i] == '|') {
 			state.modelMat = glm::rotate(state.modelMat, deg2rad(180), glm::vec3(0, 0, 1));
 		} else if (rule[i] == '!') {
-			state.radius *= 0.7;
+			state.radius = extractArgument(rule, i + 1, i);
 		} else if (rule[i] == '\'') {
 			state.color.g = min(1, state.color.g + 0.2);
+		} else if (rule[i] == '$') {
+			glm::vec4 h(0, 1, 0, 0);
+			h = state.modelMat * h;
+			glm::vec4 v(0, 1, 0, 0);
+			glm::vec3 l = glm::cross(glm::vec3(v), glm::vec3(h));
+			glm::vec3 u = glm::cross(glm::vec3(h), l);
+			l.x = -l.x;
+
+			state.modelMat[0] = glm::vec4(l, 1);
+			state.modelMat[1] = h;
+			state.modelMat[2] = glm::vec4(u, 1);
+			state.modelMat[3] = glm::vec4(0, 0, 0, 1);
+
+			i++;
 		} else if (rule[i] == 'f') {
 			drawCircle(state.modelMat, 20.0, 4.0, state.color);
 		} else if (rule[i] == 'F') {
-			int index1 = rule.find('(', i + 1);
-			int index2 = rule.find(')', i + 1);
-			double length = stof(rule.substr(index1 + 1, index2 - index1 - 1));
+			double length = extractArgument(rule, i + 1, i);
 			drawCylinder(state.modelMat, state.radius, state.radius, length, state.color);
 			state.modelMat = glm::translate(state.modelMat, glm::vec3(0, length, 0));
-			i = index2;
+		} else {
+			i++;
 		}
 	}
 }
@@ -312,6 +312,15 @@ std::vector<std::string> split(const string& str, char delim) {
 	}
 	res.push_back(string(str, current, str.size() - current));
 	return res;
+}
+
+double extractArgument(const string& str, int startIndex, int& nextIndex) {
+	int index1 = str.find('(', startIndex);
+	int index2 = str.find(')', startIndex);
+
+	nextIndex = index2 + 1;
+
+	return stof(str.substr(index1 + 1, index2 - index1 - 1));
 }
 
 }
