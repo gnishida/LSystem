@@ -33,6 +33,8 @@ bool Rule::isTrue(const vector<double>& values) {
 }
 
 string Rule::derive(const string arg) {
+	if (arg == "") return right_hand;
+
 	vector<string> arg_list = split(arg, ',');
 	vector<double> values;
 	for (int i = 0; i < arg_list.size(); ++i) {
@@ -43,6 +45,8 @@ string Rule::derive(const string arg) {
 }
 
 string Rule::derive(const vector<double>& values) {
+	if (values.size() == 0) return right_hand;
+
 	string r = right_hand;
 	for (int i = 0; i < variables.size(); ++i) {
 		replaceAll(r, variables[i], to_string((long double)values[i]));
@@ -81,15 +85,22 @@ ParametricLSystem::ParametricLSystem() {
 	rules['C'] = Rule("C(l,w)", "*", "!(w)F(l)[+(45)$B(l*0.6,w*0.707)]B(l*0.9,w*0.707)");
 	*/
 	
+	/*
 	axiom = "A(20,5)";
 	N = 10;
 	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(10)B(l*0.9,w*0.707)]/(180)[&(60)B(l*0.7,w*0.707)");
 	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[+(10)$B(l*0.9,w*0.707)][-(60)$B(l*0.7,w*0.707)]");
-	
+	*/
+
+	axiom = "!(1)F(200)/(45)A()";
+	N = 6;
+	rules['A'] = Rule("A()", "*", "!(1.732)F(50)[&(18.95)F(50)A()]/(94.74)[&(18.95)F(50)A()]/(132.63)[&(18.95)F(50)A()]");
+	rules['F'] = Rule("F(l)", "*", "F(l*1.109)");
+	rules['!'] = Rule("!(w)", "*", "!(w*1.732)");
 
 	srand(time(NULL));
 	rule = derive();
-	//cout << rule << endl;
+	cout << rule << endl;
 }
 
 string ParametricLSystem::derive() {
@@ -97,7 +108,7 @@ string ParametricLSystem::derive() {
 	for (int n = 0; n < N; ++n) {
 		string next;
 		for (int i = 0; i < result.length(); ) {
-			if (result[i] >= 'A' && result[i] <= 'Z' && rules.find(result[i]) != rules.end()) {
+			if (rules.find(result[i]) != rules.end()) {
 				int index1 = result.find('(', i + 1);
 				int index2 = result.find(')', i + 1);
 
@@ -167,7 +178,7 @@ void ParametricLSystem::drawSegment(string rule) {
 			drawCircle(state.modelMat, 20.0, 4.0, state.color);
 		} else if (rule[i] == 'F') {
 			double length = extractArgument(rule, i + 1, i);
-			drawCylinder(state.modelMat, state.diameter * 0.5 * 0.707, state.diameter * 0.5, length, state.color);
+			drawCylinder(state.modelMat, state.diameter * 0.5, state.diameter * 0.5, length, state.color);
 			state.modelMat = glm::translate(state.modelMat, glm::vec3(0, length, 0));
 		} else {
 			i++;

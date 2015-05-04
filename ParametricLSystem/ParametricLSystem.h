@@ -17,7 +17,7 @@ public:
 	glm::vec3 color;
 
 public:
-	State() : diameter(0.0), color(0, 0.7, 0) {};
+	State() : diameter(0.0), color(0, 0.5, 0) {};
 };
 
 class Rule {
