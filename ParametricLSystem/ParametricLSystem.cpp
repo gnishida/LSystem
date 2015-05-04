@@ -13,13 +13,19 @@ Rule::Rule(const string& left_hand, const string& condition, const string& right
 	int index1 = left_hand.find('(');
 	int index2 = left_hand.find(')');
 
-	string arg = left_hand.substr(index1 + 1, index2 - index1 - 1);
-	vector<string> arg_list = split(arg, ',');
-	for (int i = 0; i < arg_list.size(); ++i) {
-		variables.push_back(arg_list[i]);
+	if (index1 >= 0) {
+		string arg = left_hand.substr(index1 + 1, index2 - index1 - 1);
+		vector<string> arg_list = split(arg, ',');
+		for (int i = 0; i < arg_list.size(); ++i) {
+			variables.push_back(arg_list[i]);
+		}
 	}
 
-	this->left_hand = left_hand.substr(0, index1);
+	if (index1 >= 0) {
+		this->left_hand = left_hand.substr(0, index1);
+	} else {
+		this->left_hand = left_hand;
+	}
 	this->condition = condition;
 	this->right_hand = right_hand;
 }
@@ -92,15 +98,22 @@ ParametricLSystem::ParametricLSystem() {
 	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[+(10)$B(l*0.9,w*0.707)][-(60)$B(l*0.7,w*0.707)]");
 	*/
 
-	axiom = "!(1)F(200)/(45)A()";
+	/*
+	axiom = "!(1)F(200)/(45)A";
 	N = 6;
-	rules['A'] = Rule("A()", "*", "!(1.732)F(50)[&(18.95)F(50)A()]/(94.74)[&(18.95)F(50)A()]/(132.63)[&(18.95)F(50)A()]");
+	rules['A'] = Rule("A", "*", "!(1.732)F(50)[&(18.95)F(50)A]/(94.74)[&(18.95)F(50)A]/(132.63)[&(18.95)F(50)A]");
+	rules['F'] = Rule("F(l)", "*", "F(l*1.109)");
+	rules['!'] = Rule("!(w)", "*", "!(w*1.732)");
+	*/
+
+	axiom = "!(1)F(200)/(45)A";
+	N = 8;
+	rules['A'] = Rule("A", "*", "!(1.732)F(50)[&(18.95)F(50)A]/(137.5)[&(18.95)F(50)A]/(137.5)[&(18.95)F(50)A]");
 	rules['F'] = Rule("F(l)", "*", "F(l*1.109)");
 	rules['!'] = Rule("!(w)", "*", "!(w*1.732)");
 
 	srand(time(NULL));
 	rule = derive();
-	cout << rule << endl;
 }
 
 string ParametricLSystem::derive() {
@@ -111,12 +124,19 @@ string ParametricLSystem::derive() {
 			if (rules.find(result[i]) != rules.end()) {
 				int index1 = result.find('(', i + 1);
 				int index2 = result.find(')', i + 1);
-
-				string arg = result.substr(index1 + 1, index2 - index1 - 1);
+				
+				string arg = "";
+				if (index1 == i + 1 && index2 > index1) {
+					arg = result.substr(index1 + 1, index2 - index1 - 1);
+				}
 
 				next += rules[result[i]].derive(arg);
 
-				i = index2 + 1;
+				if (index1 == i + 1 && index2 > index1) {
+					i = index2 + 1;
+				} else {
+					i++;
+				}
 			} else {
 				next += result[i++];
 			}
