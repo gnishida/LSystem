@@ -73,19 +73,19 @@ string Rule::derive(const vector<double>& values) {
 }
 
 ParametricLSystem::ParametricLSystem() {
+	/*
 	axiom = "A(20,5)";
 	N = 10;
 	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(45)B(l*0.6,w*0.707)]/(137.5)A(l*0.9,w*0.707)");
 	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[-(45)$C(l*0.6,w*0.707)]C(l*0.9,w*0.707)");
 	rules['C'] = Rule("C(l,w)", "*", "!(w)F(l)[+(45)$B(l*0.6,w*0.707)]B(l*0.9,w*0.707)");
-
-	/*
+	*/
+	
 	axiom = "A(20,5)";
 	N = 10;
-	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(5)B(l*0.7,w*0.707)]/(137.5)A(l*0.9,w*0.707)");
-	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[-(65)$C(l*0.7,w*0.707)]C(l*0.9,w*0.707)");
-	rules['C'] = Rule("C(l,w)", "*", "!(w)F(l)[+(65)$B(l*0.7,w*0.707)]B(l*0.9,w*0.707)");
-	*/
+	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(10)B(l*0.9,w*0.707)]/(180)[&(60)B(l*0.7,w*0.707)");
+	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[+(10)$B(l*0.9,w*0.707)][-(60)$B(l*0.7,w*0.707)]");
+	
 
 	srand(time(NULL));
 	rule = derive();
