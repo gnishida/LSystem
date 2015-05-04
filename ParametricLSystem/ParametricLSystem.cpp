@@ -73,17 +73,23 @@ string Rule::derive(const vector<double>& values) {
 }
 
 ParametricLSystem::ParametricLSystem() {
-	axiom = "A(1,10)";
+	axiom = "A(20,5)";
 	N = 10;
-	delta = 65;
 	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(45)B(l*0.6,w*0.707)]/(137.5)A(l*0.9,w*0.707)");
 	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[-(45)$C(l*0.6,w*0.707)]C(l*0.9,w*0.707)");
 	rules['C'] = Rule("C(l,w)", "*", "!(w)F(l)[+(45)$B(l*0.6,w*0.707)]B(l*0.9,w*0.707)");
-	//rules['F'] = Rule("F(x)", "x>0.1", "F(x*0.3)[+F(x*0.45)]F(x*0.25)[-F(x*0.35)]F(x*0.2)[+F(x*0.25)]F(x*0.15)[-F(x*0.1)]F(x*0.1)");
+
+	/*
+	axiom = "A(20,5)";
+	N = 10;
+	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l)[&(5)B(l*0.7,w*0.707)]/(137.5)A(l*0.9,w*0.707)");
+	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l)[-(65)$C(l*0.7,w*0.707)]C(l*0.9,w*0.707)");
+	rules['C'] = Rule("C(l,w)", "*", "!(w)F(l)[+(65)$B(l*0.7,w*0.707)]B(l*0.9,w*0.707)");
+	*/
 
 	srand(time(NULL));
 	rule = derive();
-	cout << rule << endl;
+	//cout << rule << endl;
 }
 
 string ParametricLSystem::derive() {
@@ -142,28 +148,26 @@ void ParametricLSystem::drawSegment(string rule) {
 		} else if (rule[i] == '|') {
 			state.modelMat = glm::rotate(state.modelMat, deg2rad(180), glm::vec3(0, 0, 1));
 		} else if (rule[i] == '!') {
-			state.radius = extractArgument(rule, i + 1, i);
+			state.diameter = extractArgument(rule, i + 1, i);
 		} else if (rule[i] == '\'') {
-			state.color.g = min(1, state.color.g + 0.2);
+			//state.color.g = min(1, state.color.g + 0.2);
 		} else if (rule[i] == '$') {
-			glm::vec4 h(0, 1, 0, 0);
-			h = state.modelMat * h;
-			glm::vec4 v(0, 1, 0, 0);
-			glm::vec3 l = glm::cross(glm::vec3(v), glm::vec3(h));
-			glm::vec3 u = glm::cross(glm::vec3(h), l);
-			l.x = -l.x;
+			glm::vec4 y(0, 1, 0, 0);
+			y = state.modelMat * y;
+			glm::vec3 v(0, 1, 0);
+			glm::vec3 x = glm::normalize(glm::cross(glm::vec3(y), v));
+			glm::vec3 z = glm::cross(x, glm::vec3(y));
 
-			state.modelMat[0] = glm::vec4(l, 1);
-			state.modelMat[1] = h;
-			state.modelMat[2] = glm::vec4(u, 1);
-			state.modelMat[3] = glm::vec4(0, 0, 0, 1);
+			state.modelMat[0] = glm::vec4(x, 0);
+			state.modelMat[1] = y;
+			state.modelMat[2] = glm::vec4(z, 0);
 
 			i++;
 		} else if (rule[i] == 'f') {
 			drawCircle(state.modelMat, 20.0, 4.0, state.color);
 		} else if (rule[i] == 'F') {
 			double length = extractArgument(rule, i + 1, i);
-			drawCylinder(state.modelMat, state.radius, state.radius, length, state.color);
+			drawCylinder(state.modelMat, state.diameter * 0.5 * 0.707, state.diameter * 0.5, length, state.color);
 			state.modelMat = glm::translate(state.modelMat, glm::vec3(0, length, 0));
 		} else {
 			i++;
@@ -181,7 +185,7 @@ void ParametricLSystem::drawSegment(string rule) {
  * @color			色
  */
 void ParametricLSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color) {
-	int slices = 12;
+	int slices = 22;
 
 	glBegin(GL_TRIANGLES);
 	glColor3f(color.r, color.g, color.b);

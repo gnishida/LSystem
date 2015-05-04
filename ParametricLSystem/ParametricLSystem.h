@@ -12,12 +12,12 @@ namespace parametriclsystem {
 
 class State {
 public:
-	double radius;
+	double diameter;
 	glm::mat4 modelMat;
 	glm::vec3 color;
 
 public:
-	State() : radius(0.3), color(0, 0.7, 0) {};
+	State() : diameter(0.0), color(0, 0.7, 0) {};
 };
 
 class Rule {
@@ -39,7 +39,6 @@ public:
 class ParametricLSystem {
 public:
 	int N;
-	double delta;
 	string axiom;
 	map<char, Rule> rules;
 	string rule;
