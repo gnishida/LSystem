@@ -149,6 +149,7 @@
     <ClCompile Include="LSystem.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="MLUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -196,6 +197,7 @@
     <ClInclude Include="GeneratedFiles\ui_MainWindow.h" />
     <ClInclude Include="GLWidget3D.h" />
     <ClInclude Include="LSystem.h" />
+    <ClInclude Include="MLUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.qrc">

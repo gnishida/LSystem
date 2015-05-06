@@ -1,6 +1,7 @@
 ﻿#include "MainWindow.h"
 #include <QDir>
 #include <fstream>
+#include "MLUtils.h"
 
 MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	ui.setupUi(this);
@@ -36,57 +37,6 @@ void MainWindow::sample(int N, cv::Mat_<double>& dataX, cv::Mat_<double>& dataY)
 		vector<float> statistics = glWidget->lsystem.getStatistics();
 		for (int col = 0; col < dataY.cols; ++col) {
 			dataY(iter, col) = statistics[col];
-		}
-	}
-}
-
-void MainWindow::normalizeData(cv::Mat_<double>& data, cv::Mat_<double>& normalized_data, cv::Mat_<double>& mu, cv::Mat_<double>& maxVal) {
-	cv::reduce(data, mu, 0, CV_REDUCE_AVG);
-	normalized_data = data - cv::repeat(mu, data.rows, 1);
-
-	// [-1, 1]にする
-	cv::reduce(cv::abs(normalized_data), maxVal, 0, CV_REDUCE_MAX);
-	for (int r = 0; r < data.rows; ++r) {
-		for (int c = 0; c < normalized_data.cols; ++c) {
-			if (maxVal(0, c) != 0) {
-				normalized_data(r, c) /= maxVal(0, c);
-			}
-		}
-	}
-}
-
-/**
- * 一番右の列に1を追加する。
- */
-void MainWindow::addBias(cv::Mat_<double>& data) {
-	cv::Mat_<double> tmp = data.clone();
-	data = cv::Mat_<double>(tmp.rows, tmp.cols + 1);
-	for (int r = 0; r < tmp.rows; ++r) {
-		for (int c = 0; c < tmp.cols; ++c) {
-			data(r, c) = tmp(r, c);
-		}
-		data(r, tmp.cols) = 1;
-	}
-}
-
-/**
- * データを、指定された比率に従い、trainingデータとtestデータに分割する。
- *
- */
-void MainWindow::split(const cv::Mat_<double>& data, float train_ratio, float test_ratio, cv::Mat_<double>& train_data, cv::Mat_<double>& test_data) {
-	int train_rows = data.rows * train_ratio;
-	int test_rows = data.rows - train_rows;
-
-	train_data = cv::Mat_<double>(train_rows, data.cols);
-	test_data = cv::Mat_<double>(test_rows, data.cols);
-
-	for (int r = 0; r < data.rows; ++r) {
-		for (int c = 0; c < data.cols; ++c) {
-			if (r < train_rows) {
-				train_data(r, c) = data(r, c);
-			} else {
-				test_data(r - train_rows, c) = data(r, c);
-			}
 		}
 	}
 }
@@ -165,14 +115,16 @@ void MainWindow::onLinearRegression() {
 	cv::Mat_<double> maxX, maxY;
 	cv::Mat_<double> train_dataX, train_dataY, test_dataX, test_dataY;
 	cv::Mat_<double> train_normalized_dataX, train_normalized_dataY, test_normalized_dataX, test_normalized_dataY;
+
 	sample(N, dataX, dataY);
-	normalizeData(dataX, normalized_dataX, muX, maxX);
-	normalizeData(dataY, normalized_dataY, muY, maxY);
-	addBias(normalized_dataY);
-	split(dataX, 0.9, 0.1, train_dataX, test_dataX);
-	split(dataY, 0.9, 0.1, train_dataY, test_dataY);
-	split(normalized_dataX, 0.9, 0.1, train_normalized_dataX, test_normalized_dataX);
-	split(normalized_dataY, 0.9, 0.1, train_normalized_dataY, test_normalized_dataY);
+
+	ml::normalizeDataset(dataX, normalized_dataX, muX, maxX);
+	ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
+	ml::addBias(normalized_dataY);
+	ml::splitDataset(dataX, 0.9, train_dataX, test_dataX);
+	ml::splitDataset(dataY, 0.9, train_dataY, test_dataY);
+	ml::splitDataset(normalized_dataX, 0.9, train_normalized_dataX, test_normalized_dataX);
+	ml::splitDataset(normalized_dataY, 0.9, train_normalized_dataY, test_normalized_dataY);
 
 	// Linear regressionにより、Wを求める（yW = x より、W = y^+ x)
 	cv::Mat_<double> W = train_normalized_dataY.inv(cv::DECOMP_SVD) * train_normalized_dataX;
