@@ -83,13 +83,13 @@ string Rule::derive(const vector<double>& values) {
 }
 
 ParametricLSystem::ParametricLSystem() {
-	axiom = "A(100,3)";
+	axiom = "A(400,12)";
 	N = 8;
 	rules['A'] = Rule("A(l,w)", "*", "!(w)F(l*0.3)T(l*0.7,w*0.7)");
 	rules['T'] = Rule("T(l,w)", "*", "!(w)[+(70)B(l*0.6,w*0.6)]F(l*0.1)/(180)[+(70)B(l*0.6,w*0.6)]F(l*0.1)/(180)T(l*0.8,w*0.8)");
 	rules['B'] = Rule("B(l,w)", "*", "!(w)F(l*0.1)C(l*0.9,w*0.9)");
-	rules['C'] = Rule("C(l,w)", "*", "!(w)[+(35)C(l*0.6,w*0.6)]F(l*0.1)/(180)[+(35)C(l*0.6,w*0.6)]F(l*0.1)/(180)C(l*0.8,w*0.8)");
-
+	rules['C'] = Rule("C(l,w)", "*", "!(w)-(10)[+(35)C(l*0.6,w*0.6)]F(l*0.1)[-(35)C(l*0.6,w*0.6)]F(l*0.1)C(l*0.8,w*0.8)");
+	//rules['D'] = Rule("D(l,w)", "*", "!(w)-(5)F(l*0.1)[+(20)D(l*0.6,w*0.6)]F(l*0.1)/(180)[+(20)D(l*0.6,w*0.6)]F(l*0.1)/(180)D(l*0.8,w*0.8)");
 
 	/*
 	axiom = "A(20,5)";
@@ -226,7 +226,7 @@ void ParametricLSystem::drawSegment(string rule) {
  * @color			色
  */
 void ParametricLSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color) {
-	int slices = 22;
+	int slices = 12;
 
 	glBegin(GL_TRIANGLES);
 	glColor3f(color.r, color.g, color.b);

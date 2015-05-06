@@ -63,14 +63,27 @@ LSystem::LSystem() {
 	rules['L'].push_back(pair<double, string>(1.0, "['''^^f]"));
 	*/
 
+	/*
 	N = 5;
 	delta = 25.7;
 	axiom = 'F';
 	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F[-F]F"));
 	rules['F'].push_back(pair<double, string>(0.33, "F[+F]F"));
 	rules['F'].push_back(pair<double, string>(0.34, "F[-F]F"));
+	*/
 
-	srand(time(NULL));
+	N = 7;
+	delta = 25.7;
+	axiom = 'X';
+	rules['X'].push_back(pair<double, string>(1.0, "FFFFFA"));
+	//rules['A'].push_back(pair<double, string>(0.33, "F[+FFF-A][-FFF+A]"));
+	rules['A'].push_back(pair<double, string>(0.70, "F[+A]F[-A]A"));
+	rules['A'].push_back(pair<double, string>(0.15, "F+A"));
+	rules['A'].push_back(pair<double, string>(0.15, "F-A"));
+
+	//srand(time(NULL));
+	std::random_device rnd;
+	mt.seed(rnd());
 	rule = derive();
 }
 
@@ -243,7 +256,9 @@ string LSystem::chooseRule(const vector<pair<double, string> >& rules) {
 		}
 	}
 
-	double rnd = (double)rand() / (RAND_MAX + 1) * cdf.back();
+	std::uniform_real_distribution<> randu(0, cdf.back());
+
+	double rnd = randu(mt);
 	for (int i = 0; i < cdf.size(); ++i) {
 		if (rnd <= cdf[i]) {
 			return rules[i].second;

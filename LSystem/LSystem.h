@@ -5,6 +5,7 @@
 #include <glm/gtx/string_cast.hpp>
 #include <vector>
 #include <map>
+#include <random>
 
 using namespace std;
 
@@ -27,6 +28,7 @@ public:
 	char axiom;
 	map<char, vector<pair<double, string> > > rules;
 	string rule;
+	std::mt19937 mt;
 
 public:
 	LSystem();
