@@ -9,7 +9,7 @@ const double M_PI = 3.141592653592;
 double LSystem::GRID_SIZE = 300.0;
 int LSystem::NUM_GRID = 5;
 double LSystem::CELL_SIZE = GRID_SIZE / NUM_GRID;
-int LSystem::NUM_STATS_GRID = 5;
+int LSystem::NUM_STATS_GRID = 10;
 
 LSystem::LSystem() {
 	N = 5;
@@ -33,9 +33,14 @@ void LSystem::draw() {
 	for (int r = 0; r < stats.density.rows; ++r) {
 		for (int c = 0; c < stats.density.cols; ++c) {
 			if (stats.density(r, c) == 0) {
-				deltas(r, c) = 45;
-				levels(r, c) = 5;
-				lengths(r, c) = 55;
+				float x = ((float)c + 0.5f) / NUM_STATS_GRID * GRID_SIZE - GRID_SIZE * 0.5f;
+				float y = ((float)r + 0.5f) / NUM_STATS_GRID * GRID_SIZE;
+
+				pair<int, int> uv = XYtoUV(x, y);
+
+				deltas(uv.second, uv.first) = 45;
+				levels(uv.second, uv.first) = 5;
+				lengths(uv.second, uv.first) = 55;
 			}
 		}
 	}

@@ -21,7 +21,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::sample(int N, cv::Mat_<double>& dataX, cv::Mat_<double>& dataY) {
 	dataX = cv::Mat_<double>(N, lsystem::LSystem::NUM_GRID * lsystem::LSystem::NUM_GRID * 3);
-	dataY = cv::Mat_<double>(N, lsystem::LSystem::NUM_GRID * lsystem::LSystem::NUM_GRID);
+	dataY = cv::Mat_<double>(N, lsystem::LSystem::NUM_STATS_GRID * lsystem::LSystem::NUM_STATS_GRID);
 
 	int seed_count = 0;
 	for (int iter = 0; iter < N; ++iter) {
@@ -104,6 +104,7 @@ void MainWindow::onLinearRegression() {
 
 	ml::loadDataset("samples/samples.txt", dataY, dataX);
 
+#if 0
 	ml::normalizeDataset(dataX, normalized_dataX, muX, maxX);
 	ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
 	ml::addBias(normalized_dataY);
@@ -118,15 +119,19 @@ void MainWindow::onLinearRegression() {
 	lr.train(train_normalized_dataY, train_normalized_dataX);
 	cout << "condition number: " << lr.conditionNumber() << endl;
 
+	ofstream ofs("samples/errors.txt");
+
 	// reverseで木を生成する
-	cv::Mat_<double> error = cv::Mat_<double>::zeros(1, dataX.cols);
-	cv::Mat_<double> error2 = cv::Mat_<double>::zeros(1, dataX.cols);
+	double total_error = 0.0;
 	for (int iter = 0; iter < test_normalized_dataY.rows; ++iter) {
 		cv::Mat normalized_x_hat = lr.predict(test_normalized_dataY.row(iter));
 		cv::Mat x_hat = normalized_x_hat.mul(maxX) + muX;
 
-		error += (test_normalized_dataX.row(iter) - normalized_x_hat).mul(test_normalized_dataX.row(iter) - normalized_x_hat);
-		error2 += (test_dataX.row(iter) - x_hat).mul(test_dataX.row(iter) - x_hat);
+		cv::Mat_<double> error = cv::abs(test_normalized_dataX.row(iter) - normalized_x_hat);
+
+		cv::reduce(error, error, 1, CV_REDUCE_AVG);
+		ofs << error(0, 0) << endl;
+		total_error += error(0, 0);
 
 		glWidget->lsystem.setParams(test_dataX.row(iter));
 		glWidget->updateGL();
@@ -138,16 +143,49 @@ void MainWindow::onLinearRegression() {
 		fileName = "samples/reversed_" + QString::number(iter) + ".png";
 		glWidget->grabFrameBuffer().save(fileName);
 	}
-
-	error /= test_normalized_dataY.rows;
-	error2 /= test_normalized_dataY.rows;
-	cv::sqrt(error, error);
-	cv::sqrt(error2, error2);
-	cv::reduce(error, error, 1, CV_REDUCE_AVG);
-	cv::reduce(error2, error2, 1, CV_REDUCE_AVG);
+	ofs.close();
 
 	cout << "Prediction error (normalized):" << endl;
-	cout << error << endl;
-	cout << "Prediction error:" << endl;
-	cout << error2 << endl;
+	cout << total_error / test_normalized_dataY.rows << endl;
+#endif
+
+#if 1
+	ml::addBias(dataY);
+
+	ml::splitDataset(dataX, 0.9, train_dataX, test_dataX);
+	ml::splitDataset(dataY, 0.9, train_dataY, test_dataY);
+
+	// Linear regressionにより、Wを求める（yW = x より、W = y^+ x)
+	LinearRegression lr;
+	lr.train(train_dataY, train_dataX);
+	cout << "condition number: " << lr.conditionNumber() << endl;
+
+	ofstream ofs("samples/errors.txt");
+
+	// reverseで木を生成する
+	double total_error = 0.0;
+	for (int iter = 0; iter < test_dataY.rows; ++iter) {
+		cv::Mat x_hat = lr.predict(test_dataY.row(iter));
+
+		cv::Mat_<double> error = cv::abs(test_dataX.row(iter) - x_hat);
+
+		cv::reduce(error, error, 1, CV_REDUCE_AVG);
+		ofs << error(0, 0) << endl;
+		total_error += error(0, 0);
+
+		glWidget->lsystem.setParams(test_dataX.row(iter));
+		glWidget->updateGL();
+		QString fileName = "samples/" + QString::number(iter) + ".png";
+		glWidget->grabFrameBuffer().save(fileName);
+
+		glWidget->lsystem.setParams(x_hat);
+		glWidget->updateGL();
+		fileName = "samples/reversed_" + QString::number(iter) + ".png";
+		glWidget->grabFrameBuffer().save(fileName);
+	}
+	ofs.close();
+
+	cout << "Prediction error (normalized):" << endl;
+	cout << total_error / test_dataY.rows << endl;
+#endif
 }
