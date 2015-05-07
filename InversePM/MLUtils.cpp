@@ -110,6 +110,27 @@ bool loadDataset(char* filename, cv::Mat_<double>& X, cv::Mat_<double>& Y) {
 	return true;
 }
 
+void saveDataset(char* filename, const cv::Mat_<double>& X, const cv::Mat_<double>& Y) {
+	int N = X.rows;
+
+	ofstream ofs(filename);
+
+	for (int iter = 0; iter < N; ++iter) {
+		ofs << "[";
+		for (int c = 0; c < X.cols; ++c) {
+			if (c > 0) ofs << ",";
+			ofs << X(iter, c);
+		}
+		ofs << "],[";
+		for (int c = 0; c < Y.cols; ++c) {
+			if (c > 0) ofs << ",";
+			ofs << Y(iter, c);
+		}
+		ofs << "]" << endl;
+	}
+	ofs.close();
+}
+
 void normalizeDataset(cv::Mat_<double> mat, cv::Mat_<double>& normalized_mat, cv::Mat_<double>& mu, cv::Mat_<double>& abs_max) {
 	// normalization
 	cv::reduce(mat, mu, 0, CV_REDUCE_AVG);

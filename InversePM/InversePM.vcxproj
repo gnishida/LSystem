@@ -146,6 +146,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GLWidget3D.cpp" />
+    <ClCompile Include="LinearRegression.cpp" />
     <ClCompile Include="LSystem.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
@@ -196,6 +197,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GeneratedFiles\ui_MainWindow.h" />
     <ClInclude Include="GLWidget3D.h" />
+    <ClInclude Include="LinearRegression.h" />
     <ClInclude Include="LSystem.h" />
     <ClInclude Include="MLUtils.h" />
   </ItemGroup>

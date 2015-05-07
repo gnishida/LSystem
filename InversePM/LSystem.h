@@ -25,6 +25,7 @@ public:
 	static double GRID_SIZE;
 	static int NUM_GRID;
 	static double CELL_SIZE;
+	static int NUM_STATS_GRID;
 
 public:
 	int N;
@@ -37,6 +38,7 @@ public:
 
 	cv::Mat_<float> deltas;
 	cv::Mat_<int> levels;
+	cv::Mat_<float> lengths;
 
 	Stats stats;
 

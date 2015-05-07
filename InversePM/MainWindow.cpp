@@ -2,6 +2,7 @@
 #include <QDir>
 #include <fstream>
 #include "MLUtils.h"
+#include "LinearRegression.h"
 
 MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	ui.setupUi(this);
@@ -19,7 +20,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::sample(int N, cv::Mat_<double>& dataX, cv::Mat_<double>& dataY) {
-	dataX = cv::Mat_<double>(N, lsystem::LSystem::NUM_GRID * lsystem::LSystem::NUM_GRID * 2);
+	dataX = cv::Mat_<double>(N, lsystem::LSystem::NUM_GRID * lsystem::LSystem::NUM_GRID * 3);
 	dataY = cv::Mat_<double>(N, lsystem::LSystem::NUM_GRID * lsystem::LSystem::NUM_GRID);
 
 	int seed_count = 0;
@@ -73,30 +74,12 @@ void MainWindow::onGenerateSampleFiles() {
 
 	cout << "Generating samples..." << endl;
 	
-	ofstream ofs("samples/samples.txt");
-
 	cv::Mat_<double> dataX;
 	cv::Mat_<double> dataY;
-	cv::Mat_<double> normalized_dataX;
-	cv::Mat_<double> normalized_dataY;
-	cv::Mat_<double> muX, muY;
-	cv::Mat_<double> maxX, maxY;
+	
 	sample(N, dataX, dataY);
 
-	for (int iter = 0; iter < N; ++iter) {
-		ofs << "[";
-		for (int c = 0; c < dataY.cols; ++c) {
-			if (c > 0) ofs << ",";
-			ofs << dataY(iter, c);
-		}
-		ofs << "],[";
-		for (int c = 0; c < dataX.cols; ++c) {
-			if (c > 0) ofs << ",";
-			ofs << dataX(iter, c);
-		}
-		ofs << "]" << endl;
-	}
-	ofs.close();
+	ml::saveDataset("samples/samples.txt", dataY, dataX);
 
 	glWidget->update();
 }
@@ -117,23 +100,29 @@ void MainWindow::onLinearRegression() {
 	cv::Mat_<double> train_normalized_dataX, train_normalized_dataY, test_normalized_dataX, test_normalized_dataY;
 
 	sample(N, dataX, dataY);
+	ml::saveDataset("samples/samples.txt", dataY, dataX);
+
+	ml::loadDataset("samples/samples.txt", dataY, dataX);
 
 	ml::normalizeDataset(dataX, normalized_dataX, muX, maxX);
 	ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
 	ml::addBias(normalized_dataY);
+
 	ml::splitDataset(dataX, 0.9, train_dataX, test_dataX);
 	ml::splitDataset(dataY, 0.9, train_dataY, test_dataY);
 	ml::splitDataset(normalized_dataX, 0.9, train_normalized_dataX, test_normalized_dataX);
 	ml::splitDataset(normalized_dataY, 0.9, train_normalized_dataY, test_normalized_dataY);
 
 	// Linear regressionにより、Wを求める（yW = x より、W = y^+ x)
-	cv::Mat_<double> W = train_normalized_dataY.inv(cv::DECOMP_SVD) * train_normalized_dataX;
+	LinearRegression lr;
+	lr.train(train_normalized_dataY, train_normalized_dataX);
+	cout << "condition number: " << lr.conditionNumber() << endl;
 
 	// reverseで木を生成する
 	cv::Mat_<double> error = cv::Mat_<double>::zeros(1, dataX.cols);
 	cv::Mat_<double> error2 = cv::Mat_<double>::zeros(1, dataX.cols);
 	for (int iter = 0; iter < test_normalized_dataY.rows; ++iter) {
-		cv::Mat normalized_x_hat = test_normalized_dataY.row(iter) * W;
+		cv::Mat normalized_x_hat = lr.predict(test_normalized_dataY.row(iter));
 		cv::Mat x_hat = normalized_x_hat.mul(maxX) + muX;
 
 		error += (test_normalized_dataX.row(iter) - normalized_x_hat).mul(test_normalized_dataX.row(iter) - normalized_x_hat);

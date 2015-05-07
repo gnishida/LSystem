@@ -7,9 +7,9 @@ namespace lsystem {
 
 const double M_PI = 3.141592653592;
 double LSystem::GRID_SIZE = 300.0;
-int LSystem:: NUM_GRID = 5;
+int LSystem::NUM_GRID = 5;
 double LSystem::CELL_SIZE = GRID_SIZE / NUM_GRID;
-
+int LSystem::NUM_STATS_GRID = 5;
 
 LSystem::LSystem() {
 	N = 5;
@@ -23,7 +23,7 @@ LSystem::LSystem() {
 
 void LSystem::draw() {
 	// 統計情報をクリア
-	stats.density = cv::Mat_<int>::zeros(NUM_GRID, NUM_GRID);
+	stats.density = cv::Mat_<int>::zeros(NUM_STATS_GRID, NUM_STATS_GRID);
 	
 	drawSegment(glm::mat4(), 0, string(1, axiom));
 
@@ -33,8 +33,9 @@ void LSystem::draw() {
 	for (int r = 0; r < stats.density.rows; ++r) {
 		for (int c = 0; c < stats.density.cols; ++c) {
 			if (stats.density(r, c) == 0) {
-				deltas(r, c) = 30;
+				deltas(r, c) = 45;
 				levels(r, c) = 5;
+				lengths(r, c) = 55;
 			}
 		}
 	}
@@ -49,14 +50,20 @@ void LSystem::randomInit(int seed) {
 	// グローバルコントロールパラメータをランダムにセット
 	deltas = cv::Mat_<float>::zeros(NUM_GRID, NUM_GRID);
 	levels = cv::Mat_<int>::zeros(NUM_GRID, NUM_GRID);
+	lengths = cv::Mat_<float>::zeros(NUM_GRID, NUM_GRID);
 	for (int r = 0; r < deltas.rows; ++r) {
 		for (int c = 0; c < deltas.cols; ++c) {
-			deltas(r, c) = genRand(10, 50);
+			deltas(r, c) = genRand(10, 80);
 		}
 	}
 	for (int r = 0; r < levels.rows; ++r) {
 		for (int c = 0; c < levels.cols; ++c) {
-			levels(r, c) = genRand(3, 7);
+			levels(r, c) = genRand(3, 8);
+		}
+	}
+	for (int r = 0; r < lengths.rows; ++r) {
+		for (int c = 0; c < lengths.cols; ++c) {
+			lengths(r, c) = genRand(10, 50);
 		}
 	}
 }
@@ -85,6 +92,11 @@ void LSystem::setParams(const cv::Mat_<float>& mat) {
 			levels(r, c) = m(index++, 0);
 		}
 	}
+	for (int r = 0; r < lengths.rows; ++r) {
+		for (int c = 0; c < lengths.cols; ++c) {
+			lengths(r, c) = m(index++, 0);
+		}
+	}
 
 	// Hard constraintsに従って、値を修正する
 }
@@ -95,7 +107,7 @@ void LSystem::setParams(const cv::Mat_<float>& mat) {
  * @return		パラメータの配列
  */
 vector<float> LSystem::getParams() {
-	vector<float> ret(deltas.rows * deltas.cols + levels.rows * levels.cols);
+	vector<float> ret(deltas.rows * deltas.cols + levels.rows * levels.cols + lengths.rows * lengths.cols);
 
 	int index = 0;
 	for (int r = 0; r < deltas.rows; ++r) {
@@ -106,6 +118,11 @@ vector<float> LSystem::getParams() {
 	for (int r = 0; r < levels.rows; ++r) {
 		for (int c = 0; c < levels.cols; ++c) {
 			ret[index++] = levels(r, c);
+		}
+	}
+	for (int r = 0; r < lengths.rows; ++r) {
+		for (int c = 0; c < lengths.cols; ++c) {
+			ret[index++] = lengths(r, c);
 		}
 	}
 	return ret;
@@ -169,8 +186,11 @@ void LSystem::drawSegment(glm::mat4& modelMat, int level, string rule) {
 				if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID && level < levels(uv.second, uv.first)) {
 					drawSegment(modelMat, level + 1, chooseRule(rules[rule[i]]));
 				} else {
-					drawCylinder(modelMat, 1, 1, segment_length, glm::vec3(1.0, 1.0, 1.0));
-					modelMat = glm::translate(modelMat, glm::vec3(0, segment_length, 0));
+					if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
+						float l = lengths(uv.second, uv.first);
+						drawCylinder(modelMat, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
+						modelMat = glm::translate(modelMat, glm::vec3(0, l, 0));
+					}
 				}
 			}
 		}
@@ -237,9 +257,11 @@ void LSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float ba
 		glm::vec4 p2(0, height, 0, 1);
 		p1 = modelMat * p1;
 		p2 = modelMat * p2;
-		pair<int, int> uv = XYtoUV((p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5);
-		if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-			stats.density(uv.second, uv.first)++;
+
+		int u = ((p1.x + p2.x) * 0.5 + GRID_SIZE * 0.5) / (GRID_SIZE / NUM_STATS_GRID);
+		int v = (p1.y + p2.y) * 0.5 / (GRID_SIZE / NUM_STATS_GRID);
+		if (u >= 0 && u < NUM_STATS_GRID && v >= 0 && v < NUM_STATS_GRID) {
+			stats.density(v, u)++;
 		}
 	}
 }
