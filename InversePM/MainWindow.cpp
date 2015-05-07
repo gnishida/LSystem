@@ -3,6 +3,7 @@
 #include <fstream>
 #include "MLUtils.h"
 #include "LinearRegression.h"
+#include "LinearRegressionRegularization.h"
 #include "GenerateSamplesWidget.h"
 
 MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
@@ -132,7 +133,8 @@ void MainWindow::onLinearRegression() {
 		ml::splitDataset(normalized_dataY, 0.9, train_normalized_dataY, test_normalized_dataY);
 
 		// Linear regressionにより、Wを求める（yW = x より、W = y^+ x)
-		LinearRegression lr;
+		//LinearRegression lr;
+		LinearRegressionRegularization lr;
 		lr.train(train_normalized_dataY, train_normalized_dataX);
 		cout << "condition number: " << lr.conditionNumber() << endl;
 

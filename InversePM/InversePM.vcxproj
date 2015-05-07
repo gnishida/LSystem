@@ -156,6 +156,7 @@
     <ClCompile Include="GenerateSamplesWidget.cpp" />
     <ClCompile Include="GLWidget3D.cpp" />
     <ClCompile Include="LinearRegression.cpp" />
+    <ClCompile Include="LinearRegressionRegularization.cpp" />
     <ClCompile Include="LSystem.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
@@ -226,6 +227,7 @@
     </CustomBuild>
     <ClInclude Include="GLWidget3D.h" />
     <ClInclude Include="LinearRegression.h" />
+    <ClInclude Include="LinearRegressionRegularization.h" />
     <ClInclude Include="LSystem.h" />
     <ClInclude Include="MLUtils.h" />
   </ItemGroup>
