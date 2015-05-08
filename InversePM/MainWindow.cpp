@@ -2,6 +2,7 @@
 #include <QDir>
 #include <fstream>
 #include "MLUtils.h"
+#include "LSystem.h"
 #include "LinearRegression.h"
 #include "LinearRegressionRegularization.h"
 #include "GenerateSamplesWidget.h"
@@ -50,6 +51,7 @@ void MainWindow::onGenerateSamples() {
 		return;
 	}
 
+	lsystem::LSystem::NUM_GRID = dlg.ui.lineEditNumGrid->text().toInt();
 	int N = dlg.ui.lineEditNumSamples->text().toInt();
 
 	if (!QDir("samples").exists()) QDir().mkdir("samples");
@@ -80,6 +82,7 @@ void MainWindow::onGenerateSampleFiles() {
 		return;
 	}
 
+	lsystem::LSystem::NUM_GRID = dlg.ui.lineEditNumGrid->text().toInt();
 	int N = dlg.ui.lineEditNumSamples->text().toInt();
 
 	if (!QDir("samples").exists()) QDir().mkdir("samples");
@@ -102,6 +105,7 @@ void MainWindow::onLinearRegression() {
 		return;
 	}
 
+	lsystem::LSystem::NUM_GRID = dlg.ui.lineEditNumGrid->text().toInt();
 	int N = dlg.ui.lineEditNumSamples->text().toInt();
 
 	if (!QDir("samples").exists()) QDir().mkdir("samples");
@@ -121,7 +125,24 @@ void MainWindow::onLinearRegression() {
 
 	ml::loadDataset("samples/samples.txt", dataY, dataX);
 
-	if (dlg.ui.radioButtonNormalizeData->isChecked()) {
+
+	// densityをvisualize
+	{
+		cv::Mat_<double> sum_Y;
+		cv::reduce(dataY, sum_Y, 0, CV_REDUCE_SUM);
+		cv::Mat density_img(lsystem::LSystem::NUM_GRID, lsystem::LSystem::NUM_GRID, CV_8U);
+		cout << sum_Y << endl;
+		int di = 0;
+		for (int r = 0; r < density_img.rows; ++r) {
+			for (int c = 0; c < density_img.cols; ++c) {
+				density_img.at<uchar>(r, c) = (int)min(255.0, sum_Y(0, di++));//255.0);
+			}
+		}
+		flip(density_img, density_img, 0);
+		imwrite("samples/density.png", density_img);
+	}
+
+	if (dlg.ui.checkBoxNormalizeData->isChecked()) {
 		// データをnormalizeしてテスト
 		ml::normalizeDataset(dataX, normalized_dataX, muX, maxX);
 		ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
@@ -133,41 +154,50 @@ void MainWindow::onLinearRegression() {
 		ml::splitDataset(normalized_dataY, 0.9, train_normalized_dataY, test_normalized_dataY);
 
 		// Linear regressionにより、Wを求める（yW = x より、W = y^+ x)
-		//LinearRegression lr;
-		LinearRegressionRegularization lr;
+		LinearRegression lr;
+		//LinearRegressionRegularization lr;
 		lr.train(train_normalized_dataY, train_normalized_dataX);
 		cout << "condition number: " << lr.conditionNumber() << endl;
 
-		ofstream ofs("samples/results.txt");
-
 		// reverseで木を生成する
-		cv::Mat_<double> error = cv::Mat_<double>::zeros(1, test_normalized_dataX.cols);
+		cv::Mat_<double> error = cv::Mat_<double>::zeros(1, test_normalized_dataY.cols - 1);
 		for (int iter = 0; iter < test_normalized_dataY.rows; ++iter) {
 			cv::Mat normalized_x_hat = lr.predict(test_normalized_dataY.row(iter));
 			cv::Mat x_hat = normalized_x_hat.mul(maxX) + muX;
 
-			error += (test_normalized_dataX.row(iter) - normalized_x_hat).mul(test_normalized_dataX.row(iter) - normalized_x_hat);
-
-			ofs << test_normalized_dataX.row(iter) << "," << normalized_x_hat << endl;
-
 			glWidget->lsystem.setParams(test_dataX.row(iter));
 			glWidget->updateGL();
-			QString fileName = "samples/" + QString::number(iter) + ".png";
-			glWidget->grabFrameBuffer().save(fileName);
+
+			if (dlg.ui.checkBoxSaveImages->isChecked()) {
+				QString fileName = "samples/" + QString::number(iter) + ".png";
+				glWidget->grabFrameBuffer().save(fileName);
+			}
+			vector<float> stats_hat = glWidget->lsystem.getStatistics();
 
 			glWidget->lsystem.setParams(x_hat);
 			glWidget->updateGL();
-			fileName = "samples/reversed_" + QString::number(iter) + ".png";
-			glWidget->grabFrameBuffer().save(fileName);
+			if (dlg.ui.checkBoxSaveImages->isChecked()) {
+				QString fileName = "samples/reversed_" + QString::number(iter) + ".png";
+				glWidget->grabFrameBuffer().save(fileName);
+			}
+			vector<float> stats = glWidget->lsystem.getStatistics();
+			
+			// compute error
+			error += ml::mat_square(cv::Mat_<double>(cv::Mat(stats)) - cv::Mat_<double>(cv::Mat(stats_hat))).t();
 		}
-		ofs.close();
 
-		cv::reduce(error, error, 1, CV_REDUCE_AVG);
+		error /= (double)test_normalized_dataY.rows;
+		cv::sqrt(error, error);
 
 		cout << "Prediction error (normalized):" << endl;
-		cout << sqrt(error(0, 0) / test_normalized_dataY.rows) << endl;
+		cout << error << endl;
+
+		cv::reduce(error, error, 1, CV_REDUCE_SUM);
+		cout << "Total error: " << error(0, 0) << endl;
 	} else {
 		// データをnormalizeしないでテスト
+		ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
+
 		ml::addBias(dataY);
 
 		ml::splitDataset(dataX, 0.9, train_dataX, test_dataX);
@@ -178,31 +208,38 @@ void MainWindow::onLinearRegression() {
 		lr.train(train_dataY, train_dataX);
 		cout << "condition number: " << lr.conditionNumber() << endl;
 
-		ofstream ofs("samples/results.txt");
-
 		// reverseで木を生成する
-		cv::Mat_<double> error = cv::Mat_<double>::zeros(1, test_dataX.cols);
+		cv::Mat_<double> error = cv::Mat_<double>::zeros(1, test_dataY.cols - 1);
 		for (int iter = 0; iter < test_dataY.rows; ++iter) {
 			cv::Mat x_hat = lr.predict(test_dataY.row(iter));
 
-			error += (test_dataX.row(iter) - x_hat).mul(test_dataX.row(iter) - x_hat);
-			ofs << test_dataX.row(iter) << "," << x_hat << endl;
-
 			glWidget->lsystem.setParams(test_dataX.row(iter));
 			glWidget->updateGL();
-			QString fileName = "samples/" + QString::number(iter) + ".png";
-			glWidget->grabFrameBuffer().save(fileName);
+			if (dlg.ui.checkBoxSaveImages->isChecked()) {
+				QString fileName = "samples/" + QString::number(iter) + ".png";
+				glWidget->grabFrameBuffer().save(fileName);
+			}
+			vector<float> stats_hat = glWidget->lsystem.getStatistics();
 
 			glWidget->lsystem.setParams(x_hat);
 			glWidget->updateGL();
-			fileName = "samples/reversed_" + QString::number(iter) + ".png";
-			glWidget->grabFrameBuffer().save(fileName);
+			if (dlg.ui.checkBoxSaveImages->isChecked()) {
+				QString fileName = "samples/reversed_" + QString::number(iter) + ".png";
+				glWidget->grabFrameBuffer().save(fileName);
+			}
+			vector<float> stats = glWidget->lsystem.getStatistics();
+			
+			// compute error		
+			error += ml::mat_square(cv::Mat_<double>(cv::Mat(stats)) - cv::Mat_<double>(cv::Mat(stats_hat))).t();
 		}
-		ofs.close();
 
-		cv::reduce(error, error, 1, CV_REDUCE_AVG);
+		error /= test_dataY.rows;
+		cv::sqrt(error, error);
 
 		cout << "Prediction error (normalized):" << endl;
-		cout << sqrt(error(0, 0) / test_dataY.rows) << endl;
+		cout << error << endl;
+		
+		cv::reduce(error, error, 1, CV_REDUCE_SUM);
+		cout << "Total error: " << error(0, 0) << endl;
 	}
 }

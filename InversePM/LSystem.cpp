@@ -7,8 +7,7 @@ namespace lsystem {
 
 const double M_PI = 3.141592653592;
 double LSystem::GRID_SIZE = 300.0;
-int LSystem::NUM_GRID = 10;
-double LSystem::CELL_SIZE = GRID_SIZE / NUM_GRID;
+int LSystem::NUM_GRID = 5;
 
 LSystem::LSystem() {
 	N = 5;
@@ -110,6 +109,21 @@ void LSystem::setParams(const cv::Mat_<float>& mat) {
 	}
 
 	// Hard constraintsに従って、値を修正する
+	for (int r = 0; r < deltas.rows; ++r) {
+		for (int c = 0; c < deltas.cols; ++c) {
+			deltas(r, c) = glm::clamp(deltas(r, c), 10.0f, 80.0f);
+		}
+	}
+	for (int r = 0; r < levels.rows; ++r) {
+		for (int c = 0; c < levels.cols; ++c) {
+			levels(r, c) = glm::clamp(levels(r, c), 3, 8);
+		}
+	}
+	for (int r = 0; r < lengths.rows; ++r) {
+		for (int c = 0; c < lengths.cols; ++c) {
+			lengths(r, c) = glm::clamp(lengths(r, c), 10.0f, 50.0f);
+		}
+	}
 }
 
 /**
@@ -345,8 +359,9 @@ string LSystem::chooseRule(const vector<pair<double, string> >& rules) {
 }
 
 pair<int, int> LSystem::XYtoUV(float x, float y) {
-	int u = (x + GRID_SIZE * 0.5) / CELL_SIZE;
-	int v = y / CELL_SIZE;
+	double cell_size = (double)GRID_SIZE / NUM_GRID;
+	int u = (x + GRID_SIZE * 0.5) / cell_size;
+	int v = y / cell_size;
 
 	return make_pair(u, v);
 }

@@ -33,6 +33,9 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Source Files\codebase">
+      <UniqueIdentifier>{f71a1626-8d95-4678-bca1-d118a6102e1c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -56,9 +59,6 @@
     <ClCompile Include="LSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MLUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LinearRegression.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -73,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="LinearRegressionRegularization.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\codebase\MLUtils.cpp">
+      <Filter>Source Files\codebase</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -105,9 +108,6 @@
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MLUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LinearRegression.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -116,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="LinearRegressionRegularization.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\codebase\MLUtils.h">
+      <Filter>Source Files\codebase</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -24,7 +24,7 @@ class LSystem {
 public:
 	static double GRID_SIZE;
 	static int NUM_GRID;
-	static double CELL_SIZE;
+	//static double CELL_SIZE;
 
 public:
 	int N;
