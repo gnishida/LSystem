@@ -34,7 +34,6 @@
      <string>Tool</string>
     </property>
     <addaction name="actionGenerateSamples"/>
-    <addaction name="actionGenerateSampleFiles"/>
     <addaction name="separator"/>
     <addaction name="actionLinearRegression"/>
    </widget>

@@ -20,7 +20,6 @@ public:
 
 public slots:
 	void onGenerateSamples();
-	void onGenerateSampleFiles();
 	void onLinearRegression();
 };
 

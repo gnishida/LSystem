@@ -12,7 +12,6 @@ MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, 
 
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionGenerateSamples, SIGNAL(triggered()), this, SLOT(onGenerateSamples()));
-	connect(ui.actionGenerateSampleFiles, SIGNAL(triggered()), this, SLOT(onGenerateSampleFiles()));
 	connect(ui.actionLinearRegression, SIGNAL(triggered()), this, SLOT(onLinearRegression()));
 
 	glWidget = new GLWidget3D(this);
@@ -60,41 +59,19 @@ void MainWindow::onGenerateSamples() {
 	
 	cv::Mat_<double> dataX;
 	cv::Mat_<double> dataY;
-	cv::Mat_<double> normalized_dataX;
-	cv::Mat_<double> normalized_dataY;
-	cv::Mat_<double> muX, muY;
-	cv::Mat_<double> maxX, maxY;
 	sample(N, dataX, dataY);
 
-	for (int iter = 0; iter < N; ++iter) {
-		glWidget->lsystem.setParams(dataX.row(iter));
-		glWidget->updateGL();
-		QString fileName = "samples/" + QString::number(iter) + ".png";
-		glWidget->grabFrameBuffer().save(fileName);
+	ml::saveDataset("samples/samplesX.txt", dataY);
+	ml::saveDataset("samples/samplesY.txt", dataX);
+
+	if (dlg.ui.checkBoxSaveImages->isChecked()) {
+		for (int iter = 0; iter < N; ++iter) {
+			glWidget->lsystem.setParams(dataX.row(iter));
+			glWidget->updateGL();
+			QString fileName = "samples/" + QString::number(iter) + ".png";
+			glWidget->grabFrameBuffer().save(fileName);
+		}
 	}
-
-	glWidget->update();
-}
-
-void MainWindow::onGenerateSampleFiles() {
-	GenerateSamplesWidget dlg(this);
-	if (dlg.exec() != QDialog::Accepted) {
-		return;
-	}
-
-	lsystem::LSystem::NUM_GRID = dlg.ui.lineEditNumGrid->text().toInt();
-	int N = dlg.ui.lineEditNumSamples->text().toInt();
-
-	if (!QDir("samples").exists()) QDir().mkdir("samples");
-
-	cout << "Generating samples..." << endl;
-	
-	cv::Mat_<double> dataX;
-	cv::Mat_<double> dataY;
-	
-	sample(N, dataX, dataY);
-
-	ml::saveDataset("samples/samples.txt", dataY, dataX);
 
 	glWidget->update();
 }
@@ -121,9 +98,11 @@ void MainWindow::onLinearRegression() {
 	cv::Mat_<double> train_normalized_dataX, train_normalized_dataY, test_normalized_dataX, test_normalized_dataY;
 
 	sample(N, dataX, dataY);
-	ml::saveDataset("samples/samples.txt", dataY, dataX);
+	ml::saveDataset("samples/samplesX.txt", dataY);
+	ml::saveDataset("samples/samplesY.txt", dataX);
 
-	ml::loadDataset("samples/samples.txt", dataY, dataX);
+	ml::loadDataset("samples/samplesX.txt", dataY);
+	ml::loadDataset("samples/samplesY.txt", dataX);
 
 	// densityをvisualize
 	{
