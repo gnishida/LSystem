@@ -127,6 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\codebase\LinearRegression.cpp" />
+    <ClCompile Include="..\..\codebase\LinearRegressionRegularization.cpp" />
     <ClCompile Include="..\..\codebase\MLUtils.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_GenerateSamplesWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -156,8 +158,6 @@
     </ClCompile>
     <ClCompile Include="GenerateSamplesWidget.cpp" />
     <ClCompile Include="GLWidget3D.cpp" />
-    <ClCompile Include="LinearRegression.cpp" />
-    <ClCompile Include="LinearRegressionRegularization.cpp" />
     <ClCompile Include="LSystem.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
@@ -204,6 +204,8 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\codebase\LinearRegression.h" />
+    <ClInclude Include="..\..\codebase\LinearRegressionRegularization.h" />
     <ClInclude Include="..\..\codebase\MLUtils.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GeneratedFiles\ui_GenerateSamplesWidget.h" />
@@ -227,7 +229,6 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe" -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED  -DBOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtOpenGL" "-I.\..\glm" "-I.\..\opencv\include" "-I.\..\..\codebase"</Command>
     </CustomBuild>
     <ClInclude Include="GLWidget3D.h" />
-    <ClInclude Include="LinearRegression.h" />
     <ClInclude Include="LinearRegressionRegularization.h" />
     <ClInclude Include="LSystem.h" />
   </ItemGroup>

@@ -125,7 +125,6 @@ void MainWindow::onLinearRegression() {
 
 	ml::loadDataset("samples/samples.txt", dataY, dataX);
 
-
 	// densityをvisualize
 	{
 		cv::Mat_<double> sum_Y;
@@ -153,10 +152,22 @@ void MainWindow::onLinearRegression() {
 		ml::splitDataset(normalized_dataX, 0.9, train_normalized_dataX, test_normalized_dataX);
 		ml::splitDataset(normalized_dataY, 0.9, train_normalized_dataY, test_normalized_dataY);
 
+
+		test_dataX = train_dataX.clone();
+		test_dataY = train_dataY.clone();
+		test_normalized_dataX = train_normalized_dataX.clone();
+		test_normalized_dataY = train_normalized_dataY.clone();
+
+
+
+
+
 		// Linear regressionにより、Wを求める（yW = x より、W = y^+ x)
 		LinearRegression lr;
+		double residue = lr.train(train_normalized_dataY, train_normalized_dataX);
 		//LinearRegressionRegularization lr;
-		lr.train(train_normalized_dataY, train_normalized_dataX);
+		//double residue = lr.train(train_normalized_dataY, train_normalized_dataX, 0, 0.01, 100);
+		cout << "residue: " << residue << endl;
 		cout << "condition number: " << lr.conditionNumber() << endl;
 
 		// reverseで木を生成する
