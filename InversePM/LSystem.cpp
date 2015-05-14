@@ -8,6 +8,7 @@ namespace lsystem {
 const double M_PI = 3.141592653592;
 double LSystem::GRID_SIZE = 300.0;
 int LSystem::NUM_GRID = 5;
+int LSystem::NUM_STAT_GRID = 10;
 
 LSystem::LSystem() {
 	N = 5;
@@ -25,7 +26,8 @@ LSystem::LSystem() {
 void LSystem::draw() {
 	// 統計情報をクリア
 	stats.density = cv::Mat_<int>::zeros(NUM_GRID, NUM_GRID);
-	
+	stats.coverage = cv::Mat_<float>::zeros(NUM_STAT_GRID, NUM_STAT_GRID);
+
 	drawSegment(glm::mat4(), 0, string(1, axiom));
 
 	// densityが0のセルについて、PMパラメータを真ん中の値にする
@@ -109,6 +111,7 @@ void LSystem::setParams(const cv::Mat_<float>& mat) {
 	}
 
 	// Hard constraintsに従って、値を修正する
+	/*
 	for (int r = 0; r < deltas.rows; ++r) {
 		for (int c = 0; c < deltas.cols; ++c) {
 			deltas(r, c) = glm::clamp(deltas(r, c), 10.0f, 80.0f);
@@ -124,6 +127,7 @@ void LSystem::setParams(const cv::Mat_<float>& mat) {
 			lengths(r, c) = glm::clamp(lengths(r, c), 10.0f, 50.0f);
 		}
 	}
+	*/
 }
 
 /**
@@ -154,11 +158,11 @@ vector<float> LSystem::getParams() {
 }
 
 vector<float> LSystem::getStatistics() {
-	vector<float> ret(stats.density.rows * stats.density.cols);
+	vector<float> ret(stats.coverage.rows * stats.coverage.cols);
 	int index = 0;
-	for (int r = 0; r < stats.density.rows; ++r) {
-		for (int c = 0; c < stats.density.cols; ++c) {
-			ret[index++] = stats.density(r, c);
+	for (int r = 0; r < stats.coverage.rows; ++r) {
+		for (int c = 0; c < stats.coverage.cols; ++c) {
+			ret[index++] = stats.coverage(r, c);
 		}
 	}
 
@@ -287,6 +291,19 @@ void LSystem::drawCylinder(const glm::mat4& modelMat, float top_radius, float ba
 		int v = (p1.y + p2.y) * 0.5 / (GRID_SIZE / NUM_GRID);
 		if (u >= 0 && u < NUM_GRID && v >= 0 && v < NUM_GRID) {
 			stats.density(v, u)++;
+		}
+	}
+
+	// 統計情報を更新
+	{
+		for (float h = 0.0; h <= height; h += 1.0) {
+			glm::vec4 p(0, h, 0, 1);
+			p = modelMat * p;
+			int u = (p.x + GRID_SIZE * 0.5) / (GRID_SIZE / NUM_STAT_GRID);
+			int v = p.y / (GRID_SIZE / NUM_STAT_GRID);
+			if (u >= 0 && u < NUM_STAT_GRID && v >= 0 && v < NUM_STAT_GRID) {
+				stats.coverage(v, u) = 1;
+			}
 		}
 	}
 }

@@ -36,6 +36,8 @@
     <addaction name="actionGenerateSamples"/>
     <addaction name="separator"/>
     <addaction name="actionLinearRegression"/>
+    <addaction name="actionNearestNeighbor"/>
+    <addaction name="actionLocalRegression"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTool"/>
@@ -67,6 +69,16 @@
   <action name="actionGenerateSampleFiles">
    <property name="text">
     <string>Generate Sample Files</string>
+   </property>
+  </action>
+  <action name="actionNearestNeighbor">
+   <property name="text">
+    <string>Nearest Neighbor</string>
+   </property>
+  </action>
+  <action name="actionLocalRegression">
+   <property name="text">
+    <string>Local Regression</string>
    </property>
   </action>
  </widget>

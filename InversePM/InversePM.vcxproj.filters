@@ -77,6 +77,12 @@
     <ClCompile Include="..\..\codebase\LinearRegressionRegularization.cpp">
       <Filter>Source Files\codebase</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\codebase\NearestNeighborRegression.cpp">
+      <Filter>Source Files\codebase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\codebase\LocalLinearRegression.cpp">
+      <Filter>Source Files\codebase</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -121,6 +127,12 @@
       <Filter>Source Files\codebase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\codebase\LinearRegressionRegularization.h">
+      <Filter>Source Files\codebase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\codebase\NearestNeighborRegression.h">
+      <Filter>Source Files\codebase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\codebase\LocalLinearRegression.h">
       <Filter>Source Files\codebase</Filter>
     </ClInclude>
   </ItemGroup>

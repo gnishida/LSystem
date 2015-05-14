@@ -18,12 +18,14 @@ namespace lsystem {
 class Stats {
 public:
 	cv::Mat_<float> density;
+	cv::Mat_<float> coverage;
 };
 
 class LSystem {
 public:
 	static double GRID_SIZE;
 	static int NUM_GRID;
+	static int NUM_STAT_GRID;
 	//static double CELL_SIZE;
 
 public:

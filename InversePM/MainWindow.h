@@ -21,6 +21,8 @@ public:
 public slots:
 	void onGenerateSamples();
 	void onLinearRegression();
+	void onNearestNeighbor();
+	void onLocalRegression();
 };
 
 #endif // MAINWINDOW_H

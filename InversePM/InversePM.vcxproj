@@ -129,7 +129,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\codebase\LinearRegression.cpp" />
     <ClCompile Include="..\..\codebase\LinearRegressionRegularization.cpp" />
+    <ClCompile Include="..\..\codebase\LocalLinearRegression.cpp" />
     <ClCompile Include="..\..\codebase\MLUtils.cpp" />
+    <ClCompile Include="..\..\codebase\NearestNeighborRegression.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_GenerateSamplesWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -206,7 +208,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\codebase\LinearRegression.h" />
     <ClInclude Include="..\..\codebase\LinearRegressionRegularization.h" />
+    <ClInclude Include="..\..\codebase\LocalLinearRegression.h" />
     <ClInclude Include="..\..\codebase\MLUtils.h" />
+    <ClInclude Include="..\..\codebase\NearestNeighborRegression.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GeneratedFiles\ui_GenerateSamplesWidget.h" />
     <ClInclude Include="GeneratedFiles\ui_MainWindow.h" />
