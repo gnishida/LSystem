@@ -81,8 +81,10 @@ void MainWindow::onGenerateSamples() {
 	cv::Mat_<double> dataY;
 	sample(N, num_grid, num_stat_grid, dataX, dataY);
 
-	ml::saveDataset("samples/samplesX.txt", dataY);
-	ml::saveDataset("samples/samplesY.txt", dataX);
+	QString filenameX = "samples/samplesX_" + QString::number(N) + "_" + QString::number(num_grid) + "_" + QString::number(num_stat_grid) + ".txt";
+	QString filenameY = "samples/samplesY_" + QString::number(N) + "_" + QString::number(num_grid) + "_" + QString::number(num_stat_grid) + ".txt";
+	ml::saveDataset(filenameX.toUtf8().data(), dataX);
+	ml::saveDataset(filenameY.toUtf8().data(), dataY);
 
 	if (dlg.ui.checkBoxSaveImages->isChecked()) {
 		for (int iter = 0; iter < N; ++iter) {
