@@ -10,10 +10,6 @@ public:
 	Ui::GenerateSamplesWidget ui;
 
 public:
-	int max_round;
-	int max_step;
-
-public:
 	GenerateSamplesWidget(QWidget* parent);
 
 public slots:

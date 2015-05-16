@@ -17,40 +17,37 @@ namespace lsystem {
 // 統計情報（high-level indicators）
 class Stats {
 public:
-	cv::Mat_<float> density;
-	cv::Mat_<float> coverage;
+	cv::Mat_<int> coverage;
+	cv::Mat_<double> density;
 };
 
 class LSystem {
 public:
 	static double GRID_SIZE;
-	static int NUM_GRID;
-	static int NUM_STAT_GRID;
-	//static double CELL_SIZE;
 
-public:
-	int N;
-	double delta;
+private:
+	int NUM_GRID;
+	int NUM_STAT_GRID;
+
 	char axiom;
 	map<char, vector<pair<double, string> > > rules;
 	string rule;
 	std::mt19937 mt;
-	double segment_length;
 
 	cv::Mat_<float> deltas;
 	cv::Mat_<int> levels;
 	cv::Mat_<float> lengths;
 
+public:
 	Stats stats;
 
 public:
 	LSystem();
 	void draw();
-	void randomInit(int seed);
-	void setParams(const cv::Mat_<float>& mat);
-	vector<float> getParams();
-	vector<float> getStatistics();
-
+	void randomInit(int num_grid, int num_stat_grid, int seed);
+	void setParams(int num_grid, int num_stat_grid, const cv::Mat_<double>& mat);
+	cv::Mat_<double> getParams() const;
+	cv::Mat_<double> getStatistics() const;
 
 private:
 	void drawSegment(glm::mat4& modelMat, int level, string rule);

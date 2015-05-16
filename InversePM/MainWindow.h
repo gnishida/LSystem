@@ -16,13 +16,14 @@ public:
 	MainWindow(QWidget *parent = 0, Qt::WFlags flags = 0);
 	~MainWindow();
 
-	void sample(int N, cv::Mat_<double>& dataX, cv::Mat_<double>& dataY);
+	void sample(int N, int num_grid, int num_stat_grid, cv::Mat_<double>& dataX, cv::Mat_<double>& dataY);
 
 public slots:
 	void onGenerateSamples();
 	void onLinearRegression();
 	void onNearestNeighbor();
 	void onLocalRegression();
+	void onBaseline();
 };
 
 #endif // MAINWINDOW_H

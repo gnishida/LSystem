@@ -5,8 +5,8 @@ GenerateSamplesWidget::GenerateSamplesWidget(QWidget* parent) : QDialog((QWidget
 	ui.setupUi(this);
 
 	ui.lineEditNumGrid->setText("5");
+	ui.lineEditNumStatGrid->setText("5");
 	ui.lineEditNumSamples->setText("2000");
-	ui.checkBoxNormalizeData->setChecked(true);
 	ui.checkBoxSaveImages->setChecked(false);
 
 	connect(ui.okButton, SIGNAL(clicked()), this, SLOT(accept()));

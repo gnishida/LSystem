@@ -83,6 +83,15 @@
     <ClCompile Include="..\..\codebase\LocalLinearRegression.cpp">
       <Filter>Source Files\codebase</Filter>
     </ClCompile>
+    <ClCompile Include="RegressionWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_RegressionWidget.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_RegressionWidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -98,6 +107,12 @@
       <Filter>Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="GenerateSamplesWidget.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RegressionWidget.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RegressionWidget.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -134,6 +149,12 @@
     </ClInclude>
     <ClInclude Include="..\..\codebase\LocalLinearRegression.h">
       <Filter>Source Files\codebase</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_RegressionWidget.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="asmOpenCV.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

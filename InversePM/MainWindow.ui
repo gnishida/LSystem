@@ -38,6 +38,7 @@
     <addaction name="actionLinearRegression"/>
     <addaction name="actionNearestNeighbor"/>
     <addaction name="actionLocalRegression"/>
+    <addaction name="actionBaseline"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTool"/>
@@ -79,6 +80,11 @@
   <action name="actionLocalRegression">
    <property name="text">
     <string>Local Regression</string>
+   </property>
+  </action>
+  <action name="actionBaseline">
+   <property name="text">
+    <string>Baseline</string>
    </property>
   </action>
  </widget>
