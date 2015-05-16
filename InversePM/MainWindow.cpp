@@ -16,10 +16,11 @@ MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, 
 
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionGenerateSamples, SIGNAL(triggered()), this, SLOT(onGenerateSamples()));
+	connect(ui.actionBaseline, SIGNAL(triggered()), this, SLOT(onBaseline()));
 	connect(ui.actionLinearRegression, SIGNAL(triggered()), this, SLOT(onLinearRegression()));
 	connect(ui.actionNearestNeighbor, SIGNAL(triggered()), this, SLOT(onNearestNeighbor()));
 	connect(ui.actionLocalRegression, SIGNAL(triggered()), this, SLOT(onLocalRegression()));
-	connect(ui.actionBaseline, SIGNAL(triggered()), this, SLOT(onBaseline()));
+	connect(ui.actionMCMC, SIGNAL(triggered()), this, SLOT(onMCMC()));
 
 	glWidget = new GLWidget3D(this);
 	setCentralWidget(glWidget);
@@ -422,4 +423,7 @@ void MainWindow::onBaseline() {
 	}
 
 	cout << "Baseline RMSE: " << ml::rmse(trueStats, predStats) << endl;
+}
+
+void MainWindow::onMCMC() {
 }

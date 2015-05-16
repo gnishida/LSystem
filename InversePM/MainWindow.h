@@ -20,10 +20,11 @@ public:
 
 public slots:
 	void onGenerateSamples();
+	void onBaseline();
 	void onLinearRegression();
 	void onNearestNeighbor();
 	void onLocalRegression();
-	void onBaseline();
+	void onMCMC();
 };
 
 #endif // MAINWINDOW_H

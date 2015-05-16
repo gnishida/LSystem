@@ -35,10 +35,11 @@
     </property>
     <addaction name="actionGenerateSamples"/>
     <addaction name="separator"/>
+    <addaction name="actionBaseline"/>
     <addaction name="actionLinearRegression"/>
     <addaction name="actionNearestNeighbor"/>
     <addaction name="actionLocalRegression"/>
-    <addaction name="actionBaseline"/>
+    <addaction name="actionMCMC"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTool"/>
@@ -85,6 +86,11 @@
   <action name="actionBaseline">
    <property name="text">
     <string>Baseline</string>
+   </property>
+  </action>
+  <action name="actionMCMC">
+   <property name="text">
+    <string>MCMC</string>
    </property>
   </action>
  </widget>
