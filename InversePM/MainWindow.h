@@ -24,6 +24,7 @@ public slots:
 	void onLinearRegression();
 	void onNearestNeighbor();
 	void onLocalRegression();
+	void onClusteredLR();
 	void onMCMC();
 
 	void onFindLinearity();

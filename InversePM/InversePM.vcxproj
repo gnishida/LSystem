@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\codebase\ClusteredLinearRegression.cpp" />
     <ClCompile Include="..\..\codebase\LinearRegression.cpp" />
     <ClCompile Include="..\..\codebase\LinearRegressionRegularization.cpp" />
     <ClCompile Include="..\..\codebase\LocalLinearRegression.cpp" />
@@ -215,6 +216,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\codebase\ClusteredLinearRegression.h" />
     <ClInclude Include="..\..\codebase\LinearRegression.h" />
     <ClInclude Include="..\..\codebase\LinearRegressionRegularization.h" />
     <ClInclude Include="..\..\codebase\LocalLinearRegression.h" />

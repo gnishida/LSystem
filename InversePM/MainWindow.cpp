@@ -7,6 +7,7 @@
 #include "LinearRegressionRegularization.h"
 #include "NearestNeighborRegression.h"
 #include "LocalLinearRegression.h"
+#include "ClusteredLinearRegression.h"
 #include "GenerateSamplesWidget.h"
 #include "asmOpenCV.h"
 #include <QFileDialog>
@@ -21,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, 
 	connect(ui.actionLinearRegression, SIGNAL(triggered()), this, SLOT(onLinearRegression()));
 	connect(ui.actionNearestNeighbor, SIGNAL(triggered()), this, SLOT(onNearestNeighbor()));
 	connect(ui.actionLocalRegression, SIGNAL(triggered()), this, SLOT(onLocalRegression()));
+	connect(ui.actionClusteredLR, SIGNAL(triggered()), this, SLOT(onClusteredLR()));
 	connect(ui.actionMCMC, SIGNAL(triggered()), this, SLOT(onMCMC()));
 
 	connect(ui.actionFindLinearity, SIGNAL(triggered()), this, SLOT(onFindLinearity()));
@@ -102,6 +104,83 @@ void MainWindow::onGenerateSamples() {
 	cout << "... done." << endl;
 
 	glWidget->update();
+}
+
+void MainWindow::onBaseline() {
+	cv::Mat_<double> dataX;
+	cv::Mat_<double> dataY;
+	cv::Mat_<double> normalized_dataX, normalized_dataY;
+	cv::Mat_<double> muX, muY;
+	cv::Mat_<double> maxX, maxY;
+	cv::Mat_<double> train_dataX, train_dataY, test_dataX, test_dataY;
+	cv::Mat_<double> train_normalized_dataX, train_normalized_dataY, test_normalized_dataX, test_normalized_dataY;
+
+	int num_grid;
+	int num_stat_grid;
+
+	// PM parameterデータを読み込む
+	{
+		QString filename = QFileDialog::getOpenFileName(this, tr("Open PM parameter dataset..."), "", tr("PM parameter dataset (*.txt)"));
+		if (filename.isEmpty()) return;
+
+		ml::loadDataset(filename.toUtf8().data(), dataX);
+		num_grid = sqrt(dataX.cols / 3.0);
+	}
+
+	// high-level indicatorデータを読み込む
+	{
+		QString filename = QFileDialog::getOpenFileName(this, tr("Open high-level indicator dataset..."), "", tr("High-level indicator dataset (*.txt)"));
+		if (filename.isEmpty()) return;
+
+		ml::loadDataset(filename.toUtf8().data(), dataY);
+		num_stat_grid = sqrtf(dataY.cols);
+	}
+
+	if (!QDir("samples").exists()) QDir().mkdir("samples");
+
+	// データをnormalizeしてテスト
+	ml::normalizeDataset(dataX, normalized_dataX, muX, maxX);
+	ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
+
+	float ratio = 0.9f;
+	if (dataX.rows * (1.0 - ratio) > 200) {
+		ratio = (float)(dataX.rows - 200) / dataX.rows;
+	}
+	ml::splitDataset(dataX, ratio, train_dataX, test_dataX);
+	ml::splitDataset(dataY, ratio, train_dataY, test_dataY);
+	ml::splitDataset(normalized_dataX, ratio, train_normalized_dataX, test_normalized_dataX);
+	ml::splitDataset(normalized_dataY, ratio, train_normalized_dataY, test_normalized_dataY);
+	
+	// 平均値を使って、yを予想する
+	cv::Mat_<double> normalized_x_hat;
+	cv::reduce(train_normalized_dataX, normalized_x_hat, 0, CV_REDUCE_AVG);
+	cv::Mat_<double> trueStats(test_normalized_dataY.rows, num_stat_grid * num_stat_grid);
+	cv::Mat_<double> predStats(test_normalized_dataY.rows, num_stat_grid * num_stat_grid);
+	for (int iter = 0; iter < test_normalized_dataY.rows; ++iter) {
+		cv::Mat x_hat = normalized_x_hat.mul(maxX) + muX;
+
+		glWidget->lsystem.setParams(num_grid, num_stat_grid, test_dataX.row(iter));
+		glWidget->updateGL();
+		//if (dlg.ui.checkBoxSaveImages->isChecked()) {
+		{
+			QString fileName = "samples/" + QString::number(iter) + ".png";
+			glWidget->grabFrameBuffer().save(fileName);
+		}
+		cv::Mat_<double> stats = glWidget->lsystem.getStatistics();
+		stats.copyTo(trueStats.row(iter));
+
+		glWidget->lsystem.setParams(num_grid, num_stat_grid, x_hat);
+		glWidget->updateGL();
+		//if (dlg.ui.checkBoxSaveImages->isChecked()) {
+		{
+			QString fileName = "samples/reversed_" + QString::number(iter) + ".png";
+			glWidget->grabFrameBuffer().save(fileName);
+		}
+		cv::Mat_<double> stats2 = glWidget->lsystem.getStatistics();
+		stats2.copyTo(predStats.row(iter));			
+	}
+
+	cout << "Baseline RMSE: " << ml::rmse(trueStats, predStats) << endl;
 }
 
 void MainWindow::onLinearRegression() {
@@ -351,7 +430,7 @@ void MainWindow::onLocalRegression() {
 	cout << "LLR RMSE: " << ml::rmse(trueStats, predStats) << endl;
 }
 
-void MainWindow::onBaseline() {
+void MainWindow::onClusteredLR() {
 	cv::Mat_<double> dataX;
 	cv::Mat_<double> dataY;
 	cv::Mat_<double> normalized_dataX, normalized_dataY;
@@ -395,13 +474,15 @@ void MainWindow::onBaseline() {
 	ml::splitDataset(dataY, ratio, train_dataY, test_dataY);
 	ml::splitDataset(normalized_dataX, ratio, train_normalized_dataX, test_normalized_dataX);
 	ml::splitDataset(normalized_dataY, ratio, train_normalized_dataY, test_normalized_dataY);
-	
-	// 平均値を使って、yを予想する
-	cv::Mat_<double> normalized_x_hat;
-	cv::reduce(train_normalized_dataX, normalized_x_hat, 0, CV_REDUCE_AVG);
+
+	// clustered linear regressionを使って、yを予想する
+	ClusteredLinearRegression clr(train_normalized_dataY, train_normalized_dataX, train_normalized_dataY.cols * 2);
 	cv::Mat_<double> trueStats(test_normalized_dataY.rows, num_stat_grid * num_stat_grid);
 	cv::Mat_<double> predStats(test_normalized_dataY.rows, num_stat_grid * num_stat_grid);
 	for (int iter = 0; iter < test_normalized_dataY.rows; ++iter) {
+		double dist;
+		cv::Mat normalized_x_hat = clr.predict(test_normalized_dataY.row(iter));
+
 		cv::Mat x_hat = normalized_x_hat.mul(maxX) + muX;
 
 		glWidget->lsystem.setParams(num_grid, num_stat_grid, test_dataX.row(iter));
@@ -422,10 +503,10 @@ void MainWindow::onBaseline() {
 			glWidget->grabFrameBuffer().save(fileName);
 		}
 		cv::Mat_<double> stats2 = glWidget->lsystem.getStatistics();
-		stats2.copyTo(predStats.row(iter));			
+		stats2.copyTo(predStats.row(iter));		
 	}
 
-	cout << "Baseline RMSE: " << ml::rmse(trueStats, predStats) << endl;
+	cout << "CLR RMSE: " << ml::rmse(trueStats, predStats) << endl;
 }
 
 void MainWindow::onMCMC() {

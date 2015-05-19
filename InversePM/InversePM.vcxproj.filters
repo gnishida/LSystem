@@ -92,6 +92,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_RegressionWidget.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\codebase\ClusteredLinearRegression.cpp">
+      <Filter>Source Files\codebase</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -155,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="asmOpenCV.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\codebase\ClusteredLinearRegression.h">
+      <Filter>Source Files\codebase</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
