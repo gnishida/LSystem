@@ -9,13 +9,13 @@ const double M_PI = 3.141592653592;
 double LSystem::GRID_SIZE = 300.0;
 
 LSystem::LSystem() {
-	/*
 	axiom = 'F';
 	rules['F'].push_back(pair<double, string>(1.0, "F[+F]F[-F]F"));
-	*/
 
+	/*
 	axiom = 'F';
 	rules['F'].push_back(pair<double, string>(1.0, "F[+F][-F]"));
+	*/
 
 	randomInit(5, 5, 0);
 }

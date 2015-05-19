@@ -25,6 +25,8 @@ public slots:
 	void onNearestNeighbor();
 	void onLocalRegression();
 	void onMCMC();
+
+	void onFindLinearity();
 };
 
 #endif // MAINWINDOW_H

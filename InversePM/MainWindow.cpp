@@ -15,12 +15,15 @@ MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, 
 	ui.setupUi(this);
 
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
+
 	connect(ui.actionGenerateSamples, SIGNAL(triggered()), this, SLOT(onGenerateSamples()));
 	connect(ui.actionBaseline, SIGNAL(triggered()), this, SLOT(onBaseline()));
 	connect(ui.actionLinearRegression, SIGNAL(triggered()), this, SLOT(onLinearRegression()));
 	connect(ui.actionNearestNeighbor, SIGNAL(triggered()), this, SLOT(onNearestNeighbor()));
 	connect(ui.actionLocalRegression, SIGNAL(triggered()), this, SLOT(onLocalRegression()));
 	connect(ui.actionMCMC, SIGNAL(triggered()), this, SLOT(onMCMC()));
+
+	connect(ui.actionFindLinearity, SIGNAL(triggered()), this, SLOT(onFindLinearity()));
 
 	glWidget = new GLWidget3D(this);
 	setCentralWidget(glWidget);
@@ -426,4 +429,65 @@ void MainWindow::onBaseline() {
 }
 
 void MainWindow::onMCMC() {
+}
+
+void MainWindow::onFindLinearity() {
+	cv::Mat_<double> dataX;
+	cv::Mat_<double> dataY;
+	cv::Mat_<double> normalized_dataX, normalized_dataY;
+	cv::Mat_<double> muX, muY;
+	cv::Mat_<double> maxX, maxY;
+	cv::Mat_<double> train_dataX, train_dataY, test_dataX, test_dataY;
+	cv::Mat_<double> train_normalized_dataX, train_normalized_dataY, test_normalized_dataX, test_normalized_dataY;
+
+	int num_grid;
+	int num_stat_grid;
+
+	// PM parameterデータを読み込む
+	{
+		QString filename = QFileDialog::getOpenFileName(this, tr("Open PM parameter dataset..."), "", tr("PM parameter dataset (*.txt)"));
+		if (filename.isEmpty()) return;
+
+		ml::loadDataset(filename.toUtf8().data(), dataX);
+		num_grid = sqrt(dataX.cols / 3.0);
+	}
+
+	// high-level indicatorデータを読み込む
+	{
+		QString filename = QFileDialog::getOpenFileName(this, tr("Open high-level indicator dataset..."), "", tr("High-level indicator dataset (*.txt)"));
+		if (filename.isEmpty()) return;
+
+		ml::loadDataset(filename.toUtf8().data(), dataY);
+		num_stat_grid = sqrtf(dataY.cols);
+	}
+
+	// データをnormalizeしてテスト
+	ml::normalizeDataset(dataX, normalized_dataX, muX, maxX);
+	ml::normalizeDataset(dataY, normalized_dataY, muY, maxY);
+
+	LinearRegression lr;
+
+	// PM parameterの各パラメータについて、線形性をチェック
+	{
+		ofstream ofs("pm_linearity.txt");
+		cout << "For each PM parameter, check linearity..." << endl;
+		double min_residue = std::numeric_limits<double>::max();
+		double avg_residue = 0.0;
+		for (int c = 0; c < normalized_dataX.cols; ++c) {
+			double residue = lr.train(normalized_dataY, normalized_dataX.col(c));
+			cout << lr.predict(normalized_dataY.row(0)) << endl;
+			cout << normalized_dataX(0, 0) << endl;
+			ofs << residue << endl;
+
+			avg_residue += residue;
+			if (residue < min_residue) {
+				min_residue = residue;
+			}
+		}
+		ofs.close();
+		avg_residue /= normalized_dataX.cols;
+
+		cout << "Min residue: " << min_residue << endl;
+		cout << "Avg residue: " << avg_residue << endl;
+	}
 }

@@ -40,6 +40,8 @@
     <addaction name="actionNearestNeighbor"/>
     <addaction name="actionLocalRegression"/>
     <addaction name="actionMCMC"/>
+    <addaction name="separator"/>
+    <addaction name="actionFindLinearity"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTool"/>
@@ -91,6 +93,11 @@
   <action name="actionMCMC">
    <property name="text">
     <string>MCMC</string>
+   </property>
+  </action>
+  <action name="actionFindLinearity">
+   <property name="text">
+    <string>Find Linearity</string>
    </property>
   </action>
  </widget>
