@@ -28,6 +28,7 @@ public slots:
 	void onMCMC();
 
 	void onFindLinearity();
+	void onAngleEffect();
 };
 
 #endif // MAINWINDOW_H

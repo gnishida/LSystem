@@ -27,6 +27,7 @@ void LSystem::draw() {
 
 	drawSegment(glm::mat4(), 0, string(1, axiom));
 
+#if 1
 	// coverageが0のセルについて、PMパラメータを真ん中の値にする
 	// * coverageが0の場合、PMパラメータが全く寄与しないため、
 	// * indicatorからPMパラメータを予測することは不可能だから。
@@ -42,6 +43,32 @@ void LSystem::draw() {
 				levels(uv.second, uv.first) = 5;
 				lengths(uv.second, uv.first) = 30;
 			}
+		}
+	}
+#endif
+}
+
+void LSystem::meanInit(int num_grid, int num_stat_grid) {
+	NUM_GRID = num_grid;
+	NUM_STAT_GRID = num_stat_grid;
+
+	// PM parameterを中央値にセット
+	deltas = cv::Mat_<float>::zeros(NUM_GRID, NUM_GRID);
+	levels = cv::Mat_<int>::zeros(NUM_GRID, NUM_GRID);
+	lengths = cv::Mat_<float>::zeros(NUM_GRID, NUM_GRID);
+	for (int r = 0; r < deltas.rows; ++r) {
+		for (int c = 0; c < deltas.cols; ++c) {
+			deltas(r, c) = 45;
+		}
+	}
+	for (int r = 0; r < levels.rows; ++r) {
+		for (int c = 0; c < levels.cols; ++c) {
+			levels(r, c) = 5;
+		}
+	}
+	for (int r = 0; r < lengths.rows; ++r) {
+		for (int c = 0; c < lengths.cols; ++c) {
+			lengths(r, c) = 30;
 		}
 	}
 }

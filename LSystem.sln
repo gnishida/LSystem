@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParametricLSystem", "Parame
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InversePM", "InversePM\InversePM.vcxproj", "{E20B34C6-8887-46B8-B124-A0B2C5189312}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InverseGreedyPM", "InverseGreedyPM\InverseGreedyPM.vcxproj", "{DB976BEC-8016-4143-A005-4D368C71FBE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -39,6 +41,14 @@ Global
 		{E20B34C6-8887-46B8-B124-A0B2C5189312}.Release|Win32.Build.0 = Release|Win32
 		{E20B34C6-8887-46B8-B124-A0B2C5189312}.Release|x64.ActiveCfg = Release|x64
 		{E20B34C6-8887-46B8-B124-A0B2C5189312}.Release|x64.Build.0 = Release|x64
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Debug|Win32.Build.0 = Debug|Win32
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Debug|x64.ActiveCfg = Debug|x64
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Debug|x64.Build.0 = Debug|x64
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Release|Win32.ActiveCfg = Release|Win32
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Release|Win32.Build.0 = Release|Win32
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Release|x64.ActiveCfg = Release|x64
+		{DB976BEC-8016-4143-A005-4D368C71FBE2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

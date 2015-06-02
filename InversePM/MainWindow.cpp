@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, 
 	connect(ui.actionMCMC, SIGNAL(triggered()), this, SLOT(onMCMC()));
 
 	connect(ui.actionFindLinearity, SIGNAL(triggered()), this, SLOT(onFindLinearity()));
+	connect(ui.actionAngleEffect, SIGNAL(triggered()), this, SLOT(onAngleEffect()));
 
 	glWidget = new GLWidget3D(this);
 	setCentralWidget(glWidget);
@@ -180,7 +181,7 @@ void MainWindow::onBaseline() {
 		stats2.copyTo(predStats.row(iter));			
 	}
 
-	cout << "Baseline RMSE: " << ml::rmse(trueStats, predStats) << endl;
+	cout << "Baseline RMSE: " << ml::rmse(trueStats, predStats, false) << " / (Per cell) " << ml::rmse(trueStats, predStats, true) << endl;
 }
 
 void MainWindow::onLinearRegression() {
@@ -280,7 +281,7 @@ void MainWindow::onLinearRegression() {
 		stats2.copyTo(predStats.row(iter));
 	}
 
-	cout << "LR RMSE: " << ml::rmse(trueStats, predStats) << endl;
+	cout << "LR RMSE: " << ml::rmse(trueStats, predStats, false) << " / (Per cell) " << ml::rmse(trueStats, predStats, true) << endl;
 }
 
 void MainWindow::onNearestNeighbor() {
@@ -348,7 +349,7 @@ void MainWindow::onNearestNeighbor() {
 
 	}
 
-	cout << "NN RMSE: " << ml::rmse(trueStats, predStats) << endl;
+	cout << "NN RMSE: " << ml::rmse(trueStats, predStats, false) << " / (Per cell) " << ml::rmse(trueStats, predStats, true) << endl;
 }
 
 void MainWindow::onLocalRegression() {
@@ -427,7 +428,7 @@ void MainWindow::onLocalRegression() {
 		stats2.copyTo(predStats.row(iter));		
 	}
 
-	cout << "LLR RMSE: " << ml::rmse(trueStats, predStats) << endl;
+	cout << "LLR RMSE: " << ml::rmse(trueStats, predStats, false) << " / (Per cell) " << ml::rmse(trueStats, predStats, true) << endl;
 }
 
 void MainWindow::onClusteredLR() {
@@ -506,7 +507,7 @@ void MainWindow::onClusteredLR() {
 		stats2.copyTo(predStats.row(iter));		
 	}
 
-	cout << "CLR RMSE: " << ml::rmse(trueStats, predStats) << endl;
+	cout << "CLR RMSE: " << ml::rmse(trueStats, predStats, false) << " / (Per cell) " << ml::rmse(trueStats, predStats, true) << endl;
 }
 
 void MainWindow::onMCMC() {
@@ -556,8 +557,8 @@ void MainWindow::onFindLinearity() {
 		double avg_residue = 0.0;
 		for (int c = 0; c < normalized_dataX.cols; ++c) {
 			double residue = lr.train(normalized_dataY, normalized_dataX.col(c));
-			cout << lr.predict(normalized_dataY.row(0)) << endl;
-			cout << normalized_dataX(0, 0) << endl;
+			//cout << lr.predict(normalized_dataY.row(0)) << endl;
+			//cout << normalized_dataX(0, 0) << endl;
 			ofs << residue << endl;
 
 			avg_residue += residue;
@@ -570,5 +571,71 @@ void MainWindow::onFindLinearity() {
 
 		cout << "Min residue: " << min_residue << endl;
 		cout << "Avg residue: " << avg_residue << endl;
+	}
+
+	// Indicatorの各要素について、線形性をチェック
+	{
+		ofstream ofs("indicator_linearity.txt");
+		cout << "For each indicator, check linearity..." << endl;
+		double min_residue = std::numeric_limits<double>::max();
+		double avg_residue = 0.0;
+		for (int c = 0; c < normalized_dataY.cols; ++c) {
+			double residue = lr.train(normalized_dataX, normalized_dataY.col(c));
+			//cout << lr.predict(normalized_dataX.row(0)) << endl;
+			//cout << normalized_dataY(0, 0) << endl;
+			ofs << residue << endl;
+
+			avg_residue += residue;
+			if (residue < min_residue) {
+				min_residue = residue;
+			}
+		}
+		ofs.close();
+		avg_residue /= normalized_dataY.cols;
+
+		cout << "Min residue: " << min_residue << endl;
+		cout << "Avg residue: " << avg_residue << endl;
+	}
+}
+
+void MainWindow::onAngleEffect() {
+	int num_grid = 5;
+	int num_stat_grid = 5;
+
+	glWidget->lsystem.randomInit(num_grid, num_stat_grid, 18);
+	glWidget->updateGL();
+	cv::Mat_<double> params = glWidget->lsystem.getParams();
+
+	ofstream ofs("angle_effect.txt");
+
+	for (double angle = 10.0; angle <= 80.0; angle += 0.1) {
+		ofs << angle;
+		// 中心のセルのangleパラメータだけを変更する
+		params(0, num_grid * 2.5) = angle;
+
+		// 真ん中、下から2番目のangleパラメータだけを変更する
+		//params(0, num_grid * 1.5) = angle;
+
+		glWidget->lsystem.setParams(num_grid, num_stat_grid, params);
+		glWidget->updateGL();
+		cv::Mat_<double> stats = glWidget->lsystem.getStatistics();
+
+		for (int c = 0; c < stats.cols; ++c) {
+			ofs << " " << stats(0, c);
+		}
+		ofs << endl;
+	}
+	ofs.close();
+
+	// 最後に、平均値での画像を表示する
+	{
+		// 中心のセルのangleパラメータだけを変更する
+		params(0, num_grid * 2.5) = 45;
+
+		// 真ん中、下から2番目のangleパラメータだけを変更する
+		//params(0, num_grid * 1.5) = 45;
+
+		glWidget->lsystem.setParams(num_grid, num_stat_grid, params);
+		glWidget->updateGL();
 	}
 }

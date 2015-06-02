@@ -43,6 +43,7 @@
     <addaction name="actionMCMC"/>
     <addaction name="separator"/>
     <addaction name="actionFindLinearity"/>
+    <addaction name="actionAngleEffect"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTool"/>
@@ -104,6 +105,11 @@
   <action name="actionClusteredLR">
    <property name="text">
     <string>Clustered LR</string>
+   </property>
+  </action>
+  <action name="actionAngleEffect">
+   <property name="text">
+    <string>Angle Effect</string>
    </property>
   </action>
  </widget>

@@ -44,6 +44,7 @@ public:
 public:
 	LSystem();
 	void draw();
+	void meanInit(int num_grid, int num_stat_grid);
 	void randomInit(int num_grid, int num_stat_grid, int seed);
 	void setParams(int num_grid, int num_stat_grid, const cv::Mat_<double>& mat);
 	cv::Mat_<double> getParams() const;
