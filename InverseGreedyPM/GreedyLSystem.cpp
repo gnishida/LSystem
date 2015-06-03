@@ -9,44 +9,43 @@ namespace greedylsystem {
 const double M_PI = 3.141592653592;
 double GreedyLSystem::GRID_SIZE = 300.0;
 
+int GreedyLSystem::MIN_DELTA = 10;
+int GreedyLSystem::MAX_DELTA = 80;
+int GreedyLSystem::MIN_LEVEL = 1;
+int GreedyLSystem::MAX_LEVEL = 5;
+int GreedyLSystem::MIN_LENGTH = 10;
+int GreedyLSystem::MAX_LENGTH = 50;
+
 GreedyLSystem::GreedyLSystem() {
-	axiom = 'F';
-	rules['F'].push_back(pair<double, string>(1.0, "F[+F]F[-F]F"));
-
-	/*
-	axiom = 'F';
-	rules['F'].push_back(pair<double, string>(1.0, "F[+F][-F]"));
-	*/
-
 	randomInit(5, 5, 0);
 }
 
-void GreedyLSystem::draw() {
+void GreedyLSystem::draw(bool clearUnusedParams) {
 	// 統計情報をクリア
 	stats.coverage = cv::Mat_<int>::zeros(NUM_GRID, NUM_GRID);
 	stats.density = cv::Mat_<double>::zeros(NUM_STAT_GRID, NUM_STAT_GRID);
 
-	drawSegment(glm::mat4(), 0, string(1, axiom));
+	drawSegment(glm::mat4(), 0);
 
-#if 1
-	// coverageが0のセルについて、PMパラメータを真ん中の値にする
-	// * coverageが0の場合、PMパラメータが全く寄与しないため、
-	// * indicatorからPMパラメータを予測することは不可能だから。
-	for (int r = 0; r < stats.coverage.rows; ++r) {
-		for (int c = 0; c < stats.coverage.cols; ++c) {
-			if (stats.coverage(r, c) == 0) {
-				float x = ((float)c + 0.5f) / NUM_GRID * GRID_SIZE - GRID_SIZE * 0.5f;
-				float y = ((float)r + 0.5f) / NUM_GRID * GRID_SIZE;
+	if (clearUnusedParams) {
+		// coverageが0のセルについて、PMパラメータを真ん中の値にする
+		// * coverageが0の場合、PMパラメータが全く寄与しないため、
+		// * indicatorからPMパラメータを予測することは不可能だから。
+		for (int r = 0; r < stats.coverage.rows; ++r) {
+			for (int c = 0; c < stats.coverage.cols; ++c) {
+				if (stats.coverage(r, c) == 0) {
+					float x = ((float)c + 0.5f) / NUM_GRID * GRID_SIZE - GRID_SIZE * 0.5f;
+					float y = ((float)r + 0.5f) / NUM_GRID * GRID_SIZE;
 
-				pair<int, int> uv = XYtoUV(x, y);
+					pair<int, int> uv = XYtoUV(x, y);
 
-				deltas(uv.second, uv.first) = 45;
-				levels(uv.second, uv.first) = 5;
-				lengths(uv.second, uv.first) = 30;
+					deltas(uv.second, uv.first) = (MIN_DELTA + MAX_DELTA) * 0.5;
+					levels(uv.second, uv.first) = (MIN_LEVEL + MAX_LEVEL) * 0.5;
+					lengths(uv.second, uv.first) = (MIN_LENGTH + MAX_LENGTH) * 0.5;
+				}
 			}
 		}
 	}
-#endif
 }
 
 void GreedyLSystem::meanInit(int num_grid, int num_stat_grid) {
@@ -59,17 +58,17 @@ void GreedyLSystem::meanInit(int num_grid, int num_stat_grid) {
 	lengths = cv::Mat_<float>::zeros(NUM_GRID, NUM_GRID);
 	for (int r = 0; r < deltas.rows; ++r) {
 		for (int c = 0; c < deltas.cols; ++c) {
-			deltas(r, c) = 45;
+			deltas(r, c) = (MIN_DELTA + MAX_DELTA) * 0.5;
 		}
 	}
 	for (int r = 0; r < levels.rows; ++r) {
 		for (int c = 0; c < levels.cols; ++c) {
-			levels(r, c) = 5;
+			levels(r, c) = (MIN_LEVEL + MAX_LEVEL) * 0.5;
 		}
 	}
 	for (int r = 0; r < lengths.rows; ++r) {
 		for (int c = 0; c < lengths.cols; ++c) {
-			lengths(r, c) = 30;
+			lengths(r, c) = (MIN_LENGTH + MAX_LENGTH) * 0.5;
 		}
 	}
 }
@@ -89,22 +88,29 @@ void GreedyLSystem::randomInit(int num_grid, int num_stat_grid, int seed) {
 	lengths = cv::Mat_<float>::zeros(NUM_GRID, NUM_GRID);
 	for (int r = 0; r < deltas.rows; ++r) {
 		for (int c = 0; c < deltas.cols; ++c) {
-			deltas(r, c) = genRand(10, 80);
+			deltas(r, c) = genRand(MIN_DELTA, MAX_DELTA);
 		}
 	}
 	for (int r = 0; r < levels.rows; ++r) {
 		for (int c = 0; c < levels.cols; ++c) {
-			levels(r, c) = genRand(3, 8);
+			levels(r, c) = genRand(MIN_LEVEL, MAX_LEVEL);
 		}
 	}
 	for (int r = 0; r < lengths.rows; ++r) {
 		for (int c = 0; c < lengths.cols; ++c) {
-			lengths(r, c) = genRand(10, 50);
+			lengths(r, c) = genRand(MIN_LENGTH, MAX_LENGTH);
 		}
 	}
+
+	/*cout << deltas << endl;
+	cout << levels << endl;
+	cout << lengths << endl;*/
 }
 
-void GreedyLSystem::generate(int num_grid, int num_stat_grid, const cv::Mat_<double>& target_density, const cv::Mat_<double>& sampleX, const cv::Mat_<double>& sampleY) {
+/**
+ * ターゲットindictorに最も近いサンプルのパラメータにセットする。
+ */
+void GreedyLSystem::nearestSample(int num_grid, int num_stat_grid, const cv::Mat_<double>& target_density, const cv::Mat_<double>& sampleX, const cv::Mat_<double>& sampleY) {
 	NUM_GRID = num_grid;
 	NUM_STAT_GRID = num_stat_grid;
 
@@ -115,17 +121,22 @@ void GreedyLSystem::generate(int num_grid, int num_stat_grid, const cv::Mat_<dou
 	cv::Mat_<double> sampleY_clamped = sampleY.clone();
 	ml::mat_clamp(sampleY_clamped, 0, 1);
 
+	cout << target_density << endl;
+
 	// 最も近いサンプルを取得
 	int min_index = -1;
 	{
 		float min_dist = std::numeric_limits<float>::max();
 		for (int i = 0; i < sampleY.rows; ++i) {
+			//cout << sampleY_clamped.row(i) << endl;
 			float dist = ml::mat_sum(ml::mat_square(target_density - sampleY_clamped.row(i)));
 			if (dist < min_dist) {
 				min_dist = dist;
 				min_index = i;
 			}
 		}
+		cout << "Min dist: " << min_dist << endl;
+		cout << sampleY_clamped.row(min_index) << endl;
 	}
 
 	// パラメータにセット
@@ -148,164 +159,108 @@ void GreedyLSystem::generate(int num_grid, int num_stat_grid, const cv::Mat_<dou
 		}
 	}
 
+	/*
 	cout << deltas << endl;
 	cout << levels << endl;
 	cout << lengths << endl;
+	*/
+}
 
-
+/**
+ * 現在のパラメータから出発し、ターゲットindicatorに近づくよう、パラメータを更新する。
+ */
+void GreedyLSystem::inverse(const cv::Mat_<double>& target_density) {
 	// 一番下の行から、順にパラメータを変えながら、ベストの値を決定していく
-	for (int r = 0; r < num_grid; ++r) {
-		for (int c = num_grid/2; c < num_grid; ++c) {
-			// ベストの角度を決定
-			{
-				float min_dist = std::numeric_limits<float>::max();
-				int min_delta;
-				for (int delta = 10; delta <= 80; delta += 5) {
-					deltas(r, c) = delta;
+	for (int r = 0; r < NUM_GRID; ++r) {
+		for (int cc = 0; cc < NUM_GRID - (int)(NUM_GRID/2); ++cc) {
+			for (int k = 0; k < 2; ++k) {
+				int c;
+				if (k == 0) {
+					c = (NUM_GRID - 1)/2 - cc;
+				} else {
+					c = NUM_GRID/2 + cc;
+				}
+		
+				// ベストの角度を決定
+				{
+					float min_dist = std::numeric_limits<float>::max();
+					int min_delta;
+					for (int delta = MIN_DELTA; delta <= MAX_DELTA; delta += 5) {
+						deltas(r, c) = delta;
 
-					// 生成してみる
-					draw();
+						// 生成してみる
+						draw(false);
 
-					// 統計情報を取得
-					cv::Mat_<double> stats = getStatistics();
-					ml::mat_clamp(stats, 0, 1);
+						// 統計情報を取得
+						cv::Mat_<double> stats = getStatistics();
+						ml::mat_clamp(stats, 0, 1);
 
-					float dist = ml::mat_sum(ml::mat_square(target_density - stats));
-					if (dist < min_dist) {
-						min_dist = dist;
-						min_delta = delta;
+						float dist = ml::mat_sum(ml::mat_square(target_density - stats));
+						if (dist < min_dist) {
+							min_dist = dist;
+							min_delta = delta;
+						}
 					}
+
+					deltas(r, c) = min_delta;
 				}
 
-				deltas(r, c) = min_delta;
-			}
+				// ベストの再帰数を決定
+				{
+					float min_dist = std::numeric_limits<float>::max();
+					int min_level;
+					for (int level = MIN_LEVEL; level <= MAX_LEVEL; level += 1) {
+						levels(r, c) = level;
 
-			// ベストの再帰数を決定
-			{
-				float min_dist = std::numeric_limits<float>::max();
-				int min_level;
-				for (int level = 3; level <= 8; level += 1) {
-					levels(r, c) = level;
+						// 生成してみる
+						draw(false);
 
-					// 生成してみる
-					draw();
+						// 統計情報を取得
+						cv::Mat_<double> stats = getStatistics();
+						ml::mat_clamp(stats, 0, 1);
 
-					// 統計情報を取得
-					cv::Mat_<double> stats = getStatistics();
-					ml::mat_clamp(stats, 0, 1);
-
-					float dist = ml::mat_sum(ml::mat_square(target_density - stats));
-					if (dist < min_dist) {
-						min_dist = dist;
-						min_level = level;
+						float dist = ml::mat_sum(ml::mat_square(target_density - stats));
+						if (dist < min_dist) {
+							min_dist = dist;
+							min_level = level;
+						}
 					}
+
+					levels(r, c) = min_level;
 				}
 
-				levels(r, c) = min_level;
-			}
+				// ベストの長さを決定
+				{
+					float min_dist = std::numeric_limits<float>::max();
+					int min_length;
+					for (int length = MIN_LENGTH; length <= MAX_LENGTH; length += 5) {
+						lengths(r, c) = length;
 
-			// ベストの長さを決定
-			{
-				float min_dist = std::numeric_limits<float>::max();
-				int min_length;
-				for (int length = 10; length <= 50; length += 5) {
-					lengths(r, c) = length;
+						// 生成してみる
+						draw(false);
 
-					// 生成してみる
-					draw();
+						// 統計情報を取得
+						cv::Mat_<double> stats = getStatistics();
+						ml::mat_clamp(stats, 0, 1);
 
-					// 統計情報を取得
-					cv::Mat_<double> stats = getStatistics();
-					ml::mat_clamp(stats, 0, 1);
-
-					float dist = ml::mat_sum(ml::mat_square(target_density - stats));
-					if (dist < min_dist) {
-						min_dist = dist;
-						min_length = length;
+						float dist = ml::mat_sum(ml::mat_square(target_density - stats));
+						if (dist < min_dist) {
+							min_dist = dist;
+							min_length = length;
+						}
 					}
+
+					lengths(r, c) = min_length;
 				}
-
-				lengths(r, c) = min_length;
-			}
-		}
-		for (int c = num_grid/2 - 1; c >= 0; --c) {
-			// ベストの角度を決定
-			{
-				float min_dist = std::numeric_limits<float>::max();
-				int min_delta;
-				for (int delta = 10; delta <= 80; delta += 5) {
-					deltas(r, c) = delta;
-
-					// 生成してみる
-					draw();
-
-					// 統計情報を取得
-					cv::Mat_<double> stats = getStatistics();
-					ml::mat_clamp(stats, 0, 1);
-
-					float dist = ml::mat_sum(ml::mat_square(target_density - stats));
-					if (dist < min_dist) {
-						min_dist = dist;
-						min_delta = delta;
-					}
-				}
-
-				deltas(r, c) = min_delta;
-			}
-
-			// ベストの再帰数を決定
-			{
-				float min_dist = std::numeric_limits<float>::max();
-				int min_level;
-				for (int level = 3; level <= 8; level += 1) {
-					levels(r, c) = level;
-
-					// 生成してみる
-					draw();
-
-					// 統計情報を取得
-					cv::Mat_<double> stats = getStatistics();
-					ml::mat_clamp(stats, 0, 1);
-
-					float dist = ml::mat_sum(ml::mat_square(target_density - stats));
-					if (dist < min_dist) {
-						min_dist = dist;
-						min_level = level;
-					}
-				}
-
-				levels(r, c) = min_level;
-			}
-
-			// ベストの長さを決定
-			{
-				float min_dist = std::numeric_limits<float>::max();
-				int min_length;
-				for (int length = 10; length <= 50; length += 5) {
-					lengths(r, c) = length;
-
-					// 生成してみる
-					draw();
-
-					// 統計情報を取得
-					cv::Mat_<double> stats = getStatistics();
-					ml::mat_clamp(stats, 0, 1);
-
-					float dist = ml::mat_sum(ml::mat_square(target_density - stats));
-					if (dist < min_dist) {
-						min_dist = dist;
-						min_length = length;
-					}
-				}
-
-				lengths(r, c) = min_length;
 			}
 		}
 	}
 
+	/*
 	cout << deltas << endl;
 	cout << levels << endl;
 	cout << lengths << endl;
+	*/
 }
 
 /**
@@ -348,17 +303,17 @@ void GreedyLSystem::setParams(int num_grid, int num_stat_grid, const cv::Mat_<do
 	// Hard constraintsに従って、値を修正する
 	for (int r = 0; r < deltas.rows; ++r) {
 		for (int c = 0; c < deltas.cols; ++c) {
-			deltas(r, c) = glm::clamp(deltas(r, c), 10.0f, 80.0f);
+			deltas(r, c) = glm::clamp(deltas(r, c), (float)MIN_DELTA, (float)MAX_DELTA);
 		}
 	}
 	for (int r = 0; r < levels.rows; ++r) {
 		for (int c = 0; c < levels.cols; ++c) {
-			levels(r, c) = glm::clamp(levels(r, c), 3, 8);
+			levels(r, c) = glm::clamp(levels(r, c), MIN_LEVEL, MAX_LEVEL);
 		}
 	}
 	for (int r = 0; r < lengths.rows; ++r) {
 		for (int c = 0; c < lengths.cols; ++c) {
-			lengths(r, c) = glm::clamp(lengths(r, c), 10.0f, 50.0f);
+			lengths(r, c) = glm::clamp(lengths(r, c), (float)MIN_LENGTH, (float)MAX_LENGTH);
 		}
 	}
 }
@@ -402,59 +357,76 @@ cv::Mat_<double> GreedyLSystem::getStatistics() const {
 	return ret;
 }
 
-void GreedyLSystem::drawSegment(glm::mat4& modelMat, int level, string rule) {
-	std::list<glm::mat4> stack;
+void GreedyLSystem::drawSegment(glm::mat4 modelMat, int level) {
 
-	for (int i = 0; i < rule.length(); ++i) {
+	// 上方向に伸びる、1本目の枝
+	{
 		glm::vec4 p(0, 0, 0, 1);
 		p = modelMat * p;
 		pair<int, int> uv = XYtoUV(p.x, p.y);
+		if (uv.first < 0 || uv.first >= NUM_GRID || uv.second < 0 || uv.second >= NUM_GRID) return;
+		float l = lengths(uv.second, uv.first);
 
-		if (rule[i] == '[') {
-			stack.push_back(modelMat);
-		} else if (rule[i] == ']') {
-			modelMat = stack.back();
-			stack.pop_back();
-		} else if (rule[i] == '+') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(deltas(uv.second, uv.first)), glm::vec3(0, 0, 1));
-			}
-		} else if (rule[i] == '-') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(-deltas(uv.second, uv.first)), glm::vec3(0, 0, 1));
-			}
-		} else if (rule[i] == '\\') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(deltas(uv.second, uv.first)), glm::vec3(0, 1, 0));
-			}
-		} else if (rule[i] == '/') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(-deltas(uv.second, uv.first)), glm::vec3(0, 1, 0));
-			}
-		} else if (rule[i] == '&') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(deltas(uv.second, uv.first)), glm::vec3(1, 0, 0));
-			}
-		} else if (rule[i] == '^') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(-deltas(uv.second, uv.first)), glm::vec3(1, 0, 0));
-			}
-		} else if (rule[i] == '|') {
-			if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-				modelMat = glm::rotate(modelMat, deg2rad(180), glm::vec3(0, 0, 1));
-			}
+		drawCylinder(modelMat, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
+		modelMat = glm::translate(modelMat, glm::vec3(0, l, 0));
+	}
+
+	// 左方向に再帰的に伸びる枝
+	{
+		glm::vec4 p(0, 0, 0, 1);
+		p = modelMat * p;
+		pair<int, int> uv = XYtoUV(p.x, p.y);
+		if (uv.first < 0 || uv.first >= NUM_GRID || uv.second < 0 || uv.second >= NUM_GRID) return;
+		float l = lengths(uv.second, uv.first);
+
+		glm::mat4 modelMat2 = glm::rotate(modelMat, deg2rad(deltas(uv.second, uv.first)), glm::vec3(0, 0, 1));
+		if (level < levels(uv.second, uv.first)) {
+			drawSegment(modelMat2, level + 1);
 		} else {
-			if (rules.find(rule[i]) != rules.end()) {								
-				if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID && level < levels(uv.second, uv.first)) {
-					drawSegment(modelMat, level + 1, chooseRule(rules[rule[i]]));
-				} else {
-					if (uv.first >= 0 && uv.first < NUM_GRID && uv.second >= 0 && uv.second < NUM_GRID) {
-						float l = lengths(uv.second, uv.first);
-						drawCylinder(modelMat, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
-						modelMat = glm::translate(modelMat, glm::vec3(0, l, 0));
-					}
-				}
-			}
+			drawCylinder(modelMat2, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
+		}
+	}
+
+	// 上方向に伸びる、2本目の枝
+	{
+		glm::vec4 p(0, 0, 0, 1);
+		p = modelMat * p;
+		pair<int, int> uv = XYtoUV(p.x, p.y);
+		if (uv.first < 0 || uv.first >= NUM_GRID || uv.second < 0 || uv.second >= NUM_GRID) return;
+		float l = lengths(uv.second, uv.first);
+
+		drawCylinder(modelMat, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
+		modelMat = glm::translate(modelMat, glm::vec3(0, l, 0));
+	}
+
+	// 右方向に再帰的に伸びる枝
+	{
+		glm::vec4 p(0, 0, 0, 1);
+		p = modelMat * p;
+		pair<int, int> uv = XYtoUV(p.x, p.y);
+		if (uv.first < 0 || uv.first >= NUM_GRID || uv.second < 0 || uv.second >= NUM_GRID) return;
+		float l = lengths(uv.second, uv.first);
+
+		glm::mat4 modelMat2 = glm::rotate(modelMat, deg2rad(-deltas(uv.second, uv.first)), glm::vec3(0, 0, 1));
+		if (level < levels(uv.second, uv.first)) {
+			drawSegment(modelMat2, level + 1);
+		} else {
+			drawCylinder(modelMat2, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
+		}
+	}
+
+	// 上方向に再帰的に伸びる枝
+	{
+		glm::vec4 p(0, 0, 0, 1);
+		p = modelMat * p;
+		pair<int, int> uv = XYtoUV(p.x, p.y);
+		if (uv.first < 0 || uv.first >= NUM_GRID || uv.second < 0 || uv.second >= NUM_GRID) return;
+		float l = lengths(uv.second, uv.first);
+
+		if (level < levels(uv.second, uv.first)) {
+			drawSegment(modelMat, level + 1);
+		} else {
+			drawCylinder(modelMat, 1, 1, l, glm::vec3(1.0, 1.0, 1.0));
 		}
 	}
 }
@@ -578,35 +550,6 @@ void GreedyLSystem::drawCircle(const glm::mat4& modelMat, float length, float wi
 		glVertex3f(p2.x, p2.y, p2.z);
 	}
 	glEnd();
-}
-
-/**
- * ルールリストから、確率に基づいて１つのルールを選択する。
- * リストの各要素は、<確率、ルール>のペアとなっている。
- *
- * @param rules		ルールリスト
- * @reutnr			選択されたルール
- */
-string GreedyLSystem::chooseRule(const vector<pair<double, string> >& rules) {
-	vector<double> cdf;
-	{
-		double total = 0.0;
-		for (int i = 0; i < rules.size(); ++i) {
-			total += rules[i].first;
-			cdf.push_back(total);
-		}
-	}
-
-	std::uniform_real_distribution<> randu(0, cdf.back());
-
-	double rnd = randu(mt);
-	for (int i = 0; i < cdf.size(); ++i) {
-		if (rnd <= cdf[i]) {
-			return rules[i].second;
-		}
-	}
-
-	return rules.back().second;
 }
 
 pair<int, int> GreedyLSystem::XYtoUV(float x, float y) {

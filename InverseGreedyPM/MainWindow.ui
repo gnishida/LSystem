@@ -34,7 +34,11 @@
      <string>Tool</string>
     </property>
     <addaction name="actionGenerate"/>
-    <addaction name="actionInverse"/>
+    <addaction name="separator"/>
+    <addaction name="actionNearestSample"/>
+    <addaction name="actionInverseFromNearestSample"/>
+    <addaction name="actionInverseFromMedian"/>
+    <addaction name="actionInverseFromRandom"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTool"/>
@@ -103,9 +107,24 @@
     <string>Angle Effect</string>
    </property>
   </action>
-  <action name="actionInverse">
+  <action name="actionInverseFromMedian">
    <property name="text">
-    <string>Inverse</string>
+    <string>Inverse From Median</string>
+   </property>
+  </action>
+  <action name="actionNearestSample">
+   <property name="text">
+    <string>Nearest Sample</string>
+   </property>
+  </action>
+  <action name="actionInverseFromNearestSample">
+   <property name="text">
+    <string>Inverse From Nearest Sample</string>
+   </property>
+  </action>
+  <action name="actionInverseFromRandom">
+   <property name="text">
+    <string>Inverse From Random</string>
    </property>
   </action>
  </widget>

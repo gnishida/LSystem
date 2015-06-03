@@ -92,5 +92,5 @@ void GLWidget3D::paintGL() {
  * Draw the scene.
  */
 void GLWidget3D::drawScene() {
-	lsystem.draw();
+	lsystem.draw(false);
 }
