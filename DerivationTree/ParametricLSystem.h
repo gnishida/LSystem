@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 #include <vector>
 #include <map>
 
@@ -27,6 +29,7 @@ public:
 	bool param_defined;
 
 public:
+	Literal() {}
 	Literal(char c);
 	Literal(char c, double param_value);
 };
@@ -38,51 +41,67 @@ public:
 public:
 	String() {}
 	String(string str);
+	String(Literal l);
 
 	int length() const { return str.size(); }
 	Literal operator[](int index) const { return str[index]; }
 	Literal& operator[](int index) { return str[index]; }
 	void operator+=(const Literal& l) { str.push_back(l); }
 	void operator+=(const string& str);
+	String operator+(const String& str) const;
 };
 
 ostream& operator<<(ostream& os, const String& dt);
 
-class Rule {
-public:
-	string right_hand;
-
-public:
-	Rule() {}
-	Rule(const string& right_hand);
-};
-
 class TreeNode {
 public:
-	double val;
-	TreeNode* parent;
-	map<int, TreeNode*> children;
+	static int seq;
 
 public:
-	TreeNode(double val, TreeNode* parent);
-	TreeNode* getChild(double value);
+	int id;
+	Literal l;
+	String model;
+	TreeNode* parent;
+	map<double, TreeNode*> children;
+	int num_leaves;
+	cv::Mat indicator;
+
+public:
+	TreeNode(Literal l, TreeNode* parent);
+	TreeNode* getChild(char c, double value);
 };
 
 
 class ParametricLSystem {
 public:
+	int grid_size;
+	int indicator_data_type;
+	float scale;
+
 	string axiom;
-	map<char, vector<Rule> > rules;
+	map<char, vector<string> > rules;
 	TreeNode* root;
 
 public:
-	ParametricLSystem();
+	ParametricLSystem(int grid_size, int indicator_data_type, float scale);
 	String derive(int random_seed);
-	void draw();
-	void drawTree();
-	void drawSubTree(TreeNode* node, int indent);
+	String derive(const String& model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator);
+	String derive(const String& model, const cv::Mat& target, cv::Mat& indicator);
+	//void draw(const String& model, int size, cv::Mat& img);
+	void drawTree(int max_depth);
+	void gatherIndicators(int gather_type);
+	void saveIndicatorImages(int max_depth, float min_threshold);
+	void computeIndicator(String str, float scale, cv::Mat& indicator);
+	void estimateIndicator(const String start_model, float scale, cv::Mat& indicator);
+	String inverse(const cv::Mat& target, double threshold, cv::Mat& indicator);
+	double distance(const cv::Mat& indicator, const cv::Mat& target, double threshold);
 
 private:
+	void drawSubTree(TreeNode* node, int depth, int max_depth);
+	int countLeaves(TreeNode* node);
+	cv::Mat gatherSubIndicators(TreeNode* node, int gather_type);
+	void saveSubIndicatorImages(TreeNode* node, int depth, int max_depth, float min_threshold);
+	TreeNode* traverseTree(TreeNode* node, const cv::Mat& target, double threshold);
 	/*
 	void drawSegment(string rule);
 	void drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color);

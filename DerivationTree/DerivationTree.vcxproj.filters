@@ -24,17 +24,11 @@
     <ClCompile Include="ParametricLSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Eval.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\codebase\MLUtils.cpp">
       <Filter>Source Files\codebase</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Eval.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ParametricLSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
