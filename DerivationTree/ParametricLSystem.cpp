@@ -237,8 +237,6 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 					cv::Mat indicator;
 					estimateIndicator(next, scale, indicator);
 
-					ml::mat_save("indicator.png", indicator);
-
 					// distanceを計算
 					double dist = distance(indicator, target, 0);
 
