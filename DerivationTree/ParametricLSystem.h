@@ -25,13 +25,14 @@ public:
 class Literal {
 public:
 	char c;
+	int level;
 	double param_value;
 	bool param_defined;
 
 public:
 	Literal() {}
-	Literal(char c);
-	Literal(char c, double param_value);
+	Literal(char c, int level);
+	Literal(char c, int level, double param_value);
 };
 
 class String {
@@ -40,14 +41,14 @@ public:
 
 public:
 	String() {}
-	String(string str);
+	String(string str, int level);
 	String(Literal l);
 
 	int length() const { return str.size(); }
 	Literal operator[](int index) const { return str[index]; }
 	Literal& operator[](int index) { return str[index]; }
 	void operator+=(const Literal& l) { str.push_back(l); }
-	void operator+=(const string& str);
+	void operator+=(const String& str);
 	String operator+(const String& str) const;
 };
 
@@ -67,8 +68,8 @@ public:
 	cv::Mat indicator;
 
 public:
-	TreeNode(Literal l, TreeNode* parent);
-	TreeNode* getChild(char c, double value);
+	TreeNode(const Literal& l, TreeNode* parent);
+	TreeNode* getChild(const Literal& l, double value);
 };
 
 
@@ -85,9 +86,8 @@ public:
 public:
 	ParametricLSystem(int grid_size, int indicator_data_type, float scale);
 	String derive(int random_seed);
-	String derive(const String& model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator);
-	String derive(const String& model, const cv::Mat& target, cv::Mat& indicator);
-	//void draw(const String& model, int size, cv::Mat& img);
+	String derive(const String& start_model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator);
+	String derive(const String& start_model, int max_iterations, const cv::Mat& target, cv::Mat& indicator);
 	void drawTree(int max_depth);
 	void gatherIndicators(int gather_type);
 	void saveIndicatorImages(int max_depth, float min_threshold);
@@ -107,7 +107,7 @@ private:
 	void drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color);
 	void drawCircle(const glm::mat4& modelMat, float length, float width, const glm::vec3& color);
 	*/
-	int chooseRule(char non_terminal);
+	int chooseRule(const Literal& non_terminal);
 };
 
 float deg2rad(float deg);
