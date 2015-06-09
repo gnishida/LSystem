@@ -29,11 +29,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ParametricLSystem.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\codebase\MLUtils.h">
       <Filter>Source Files\codebase</Filter>
+    </ClInclude>
+    <ClInclude Include="ParametricLSystem.h">
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

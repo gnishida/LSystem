@@ -86,6 +86,8 @@ public:
 
 public:
 	ParametricLSystem(int grid_size, int indicator_data_type, float scale);
+	void generateDerivationStateTree();
+	cv::Mat generateDerivationStateTree(TreeNode* node, FILE* fp);
 	String derive(int random_seed);
 	String derive(const String& start_model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator);
 	String derive(const String& start_model, int max_iterations, const cv::Mat& target, cv::Mat& indicator);
