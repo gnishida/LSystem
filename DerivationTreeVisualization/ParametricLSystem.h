@@ -90,13 +90,10 @@ public:
 	cv::Mat generateDerivationStateTree(TreeNode* node, FILE* fp);
 	String derive(int random_seed);
 	String derive(const String& start_model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator);
-	String derive(const String& start_model, int max_iterations, const cv::Mat& target, cv::Mat& indicator);
 	void drawTree(int max_depth);
 	void gatherIndicators(int gather_type);
 	void saveIndicatorImages(int max_depth, float min_threshold);
 	void computeIndicator(String str, float scale, cv::Mat& indicator);
-	void estimateIndicator(const String start_model, float scale, cv::Mat& indicator);
-	String inverse(const cv::Mat& target, double threshold, cv::Mat& indicator);
 	double distance(const cv::Mat& indicator, const cv::Mat& target, double threshold);
 
 private:
