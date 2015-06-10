@@ -7,9 +7,7 @@
 #include <boost/filesystem.hpp>
 
 #define MAX_ITERATIONS						200
-#define MAX_ITERATIONS_FOR_ESTIMATE			100
-#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	200
-#define MAX_LEVEL							2
+#define MAX_LEVEL							6
 
 namespace parametriclsystem {
 
@@ -145,7 +143,6 @@ cv::Mat ParametricLSystem::generateDerivationStateTree(TreeNode* node, FILE* fp)
 	if (i == -1) {
 		computeIndicator(result, scale, indicator);
 		indicator = indicator.reshape(1, 1);
-		cout << indicator << endl;
 	} else {
 		if (rules.find(result[i].c) != rules.end()) {		
 			for (int k = 0; k < rules[result[i].c].size(); ++k) {
@@ -208,7 +205,9 @@ cv::Mat ParametricLSystem::generateDerivationStateTree(TreeNode* node, FILE* fp)
 	double var = ml::mat_variance(indicator);
 
 	// ファイルに書き出す
-	fprintf(fp, "%d\t%d\t%lf\n", node->id, node->parent->id, var);
+	if (node->id > 0) {
+		fprintf(fp, "%d\t%d\t%lf\n", node->id, node->parent->id, var);
+	}
 
 	return indicator;
 }
@@ -268,95 +267,6 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 	} else {
 		computeIndicator(result, scale, indicator);
 	}
-
-	return result;
-}
-
-/**
- * 指定されたモデルからスタートし、ターゲットに近づくようモデルをgenerateする。
- *
- * @param model				初期モデル
- * @target					ターゲット
- * @indicator [OUT]			生成されたモデルのindicator
- * @return					生成されたモデル
- */
-String ParametricLSystem::derive(const String& start_model, int max_iterations, const cv::Mat& target, cv::Mat& indicator) {
-	String result = start_model;
-
-	for (int iter = 0; iter < max_iterations; ++iter) {
-		String min_next;
-
-		// 展開するパラメータを決定
-		int i = findNextLiteralToDefineValue(result);
-
-		// 新たなderivationがないなら、終了
-		if (i == -1) break;
-
-		if (rules.find(result[i].c) != rules.end()) {
-			double min_dist = std::numeric_limits<double>::max();
-
-			for (int k = 0; k < rules[result[i].c].size(); ++k) {
-				// この値を選択した時のモデルを作成
-				String next;
-				for (int j = 0; j < i; ++j) {
-					next += result[j];
-				}
-				next += String(rules[result[i].c][k], result[i].level + 1);
-				for (int j = i + 1; j < result.length(); ++j) {
-					next += result[j];
-				}
-
-				// indicatorを推定
-				cv::Mat indicator;
-				estimateIndicator(next, scale, indicator);
-
-				// distanceを計算
-				double dist = distance(indicator, target, 0);
-
-				if (dist < min_dist) {
-					min_dist = dist;
-					min_next = next;
-				}
-
-				// レベルがMAX_LEVELなら、X->Fのみ
-				if (result[i].level >= MAX_LEVEL) break;
-			}
-		} else if (result[i].c == 'F') {
-			double min_dist = std::numeric_limits<double>::max();
-					 
-			double val = grid_size / pow(3.0, result[i].level - 1);
-
-			// この値を選択した時のモデルを生成
-			min_next = result;
-			min_next[i] = Literal(result[i].c, result[i].level, val);
-		} else if (result[i].c == '-' || result[i].c == '+') {
-			double min_dist = std::numeric_limits<double>::max();
-					 
-			for (int k = 0; k < 3; ++k) {
-				double val = k * 25.0 + 10.0;
-
-				// この値を選択した時のモデルを生成
-				String next = result;
-				next[i] = Literal(result[i].c, result[i].level, val);
-
-				// indicatorを計算
-				cv::Mat indicator;
-				estimateIndicator(next, scale, indicator);
-
-				// distanceを計算
-				double dist = distance(indicator, target, 0);
-
-				if (dist < min_dist) {
-					min_dist = dist;
-					min_next = next;
-				}
-			}
-		}
-
-		result = min_next;
-	}
-
-	computeIndicator(result, scale, indicator);
 
 	return result;
 }
@@ -449,49 +359,6 @@ void ParametricLSystem::computeIndicator(String rule, float scale, cv::Mat& indi
 		} else {
 		}
 	}
-}
-
-/**
- * 指定されたモデルからスタートして、ランダムにいくつかサンプルを生成し、indicatorを加重平均して計算する。
- *
- * @param start_model		開始モデル
- * @param scale				grid_size * scaleのサイズで、indicatorを計算する
- * @param indicator [OUT]	indicator
- */
-void ParametricLSystem::estimateIndicator(const String start_model, float scale, cv::Mat& indicator) {
-	int size = grid_size * scale;
-
-	indicator = cv::Mat::zeros(size, size, indicator_data_type);
-	int N = NUM_RANDOM_GENERATION_FOR_ESTIMATE;
-
-	for (int i = 0; i < N; ++i) {
-		cv::Mat ind;
-		derive(start_model, i, MAX_ITERATIONS_FOR_ESTIMATE, false, ind);
-
-		indicator += ind;
-	}
-
-	indicator /= (double)N;
-}
-
-/**
- * 指定されたターゲットindicatorに近いモデルを生成する。
- *
- * @param target			ターゲットindicator
- * @param threshold			しきい値
- * @param indicator [OUT]	生成されたモデルのindicator
- * @return					生成されたモデル
- */
-String ParametricLSystem::inverse(const cv::Mat& target, double threshold, cv::Mat& indicator) {
-	TreeNode* node = traverseTree(root, target, threshold);
-
-	computeIndicator(node->model, scale, indicator);
-	ml::mat_save("start_model.png", indicator);
-	cout << "===================================" << endl;
-	cout << "Start model:" << endl;
-	cout << node->model << endl;
-		
-	return derive(node->model, MAX_ITERATIONS, target, indicator);
 }
 
 /**
