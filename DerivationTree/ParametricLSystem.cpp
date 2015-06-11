@@ -7,8 +7,8 @@
 #include <boost/filesystem.hpp>
 
 #define MAX_ITERATIONS						200
-#define MAX_ITERATIONS_FOR_ESTIMATE			5//100
-#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	10
+#define MAX_ITERATIONS_FOR_ESTIMATE			10//100
+#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	30
 #define MAX_LEVEL							6
 
 namespace parametriclsystem {
@@ -207,14 +207,8 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 			for (int k = 0; k < rules[result[i].c].size(); ++k) {
 				// この値を選択した時のモデルを作成
-				String next;
-				for (int j = 0; j < i; ++j) {
-					next += result[j];
-				}
-				next += String(rules[result[i].c][k], result[i].level + 1);
-				for (int j = i + 1; j < result.length(); ++j) {
-					next += result[j];
-				}
+				String next = result;
+				next.replace(i, String(rules[result[i].c][k], result[i].level + 1));
 
 				// indicatorを推定
 				cv::Mat indicator;
