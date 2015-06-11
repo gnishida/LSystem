@@ -86,28 +86,16 @@ public:
 
 public:
 	ParametricLSystem(int grid_size, int indicator_data_type, float scale);
-	void generateDerivationStateTree();
-	cv::Mat generateDerivationStateTree(TreeNode* node, FILE* fp);
+	void generateDerivationStateTree(int num_samples);
 	String derive(int random_seed);
 	String derive(const String& start_model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator);
 	void drawTree(int max_depth);
-	void gatherIndicators(int gather_type);
-	void saveIndicatorImages(int max_depth, float min_threshold);
 	void computeIndicator(String str, float scale, cv::Mat& indicator);
-	double distance(const cv::Mat& indicator, const cv::Mat& target, double threshold);
 
 private:
 	int findNextLiteralToDefineValue(const String& str);
 	void drawSubTree(TreeNode* node, int depth, int max_depth);
-	int countLeaves(TreeNode* node);
-	cv::Mat gatherSubIndicators(TreeNode* node, int gather_type);
-	void saveSubIndicatorImages(TreeNode* node, int depth, int max_depth, float min_threshold);
-	TreeNode* traverseTree(TreeNode* node, const cv::Mat& target, double threshold);
-	/*
-	void drawSegment(string rule);
-	void drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color);
-	void drawCircle(const glm::mat4& modelMat, float length, float width, const glm::vec3& color);
-	*/
+	cv::Mat gatherIndicators(TreeNode* node, FILE* fp);
 	int chooseRule(const Literal& non_terminal);
 };
 

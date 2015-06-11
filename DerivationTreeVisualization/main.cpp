@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 	int num_samples = atoi(argv[1]);
 
 	parametriclsystem::ParametricLSystem pls(300, CV_32F, 0.1);
-	pls.generateDerivationStateTree();
+	pls.generateDerivationStateTree(num_samples);
 	/*
 	for (int i = 0; i < 10; ++i) {
 		cv::Mat indicator;
