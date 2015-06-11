@@ -93,9 +93,9 @@ public:
 	void gatherIndicators(int gather_type);
 	void saveIndicatorImages(int max_depth, float min_threshold);
 	void computeIndicator(String str, float scale, cv::Mat& indicator);
-	void estimateIndicator(const String start_model, float scale, cv::Mat& indicator);
-	String inverse(const cv::Mat& target, double threshold, cv::Mat& indicator);
-	double distance(const cv::Mat& indicator, const cv::Mat& target, double threshold);
+	void estimateIndicator(const String start_model, float scale, const cv::Mat& target, cv::Mat& indicator);
+	String inverse(const cv::Mat& target, cv::Mat& indicator);
+	double distance(const cv::Mat& indicator, const cv::Mat& target);
 
 private:
 	int findNextLiteralToDefineValue(const String& str);
@@ -103,7 +103,7 @@ private:
 	int countLeaves(TreeNode* node);
 	cv::Mat gatherSubIndicators(TreeNode* node, int gather_type);
 	void saveSubIndicatorImages(TreeNode* node, int depth, int max_depth, float min_threshold);
-	TreeNode* traverseTree(TreeNode* node, const cv::Mat& target, double threshold);
+	TreeNode* traverseTree(TreeNode* node, const cv::Mat& target);
 	/*
 	void drawSegment(string rule);
 	void drawCylinder(const glm::mat4& modelMat, float top_radius, float base_radius, float height, const glm::vec3& color);

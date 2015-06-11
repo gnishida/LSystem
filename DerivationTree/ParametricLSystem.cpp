@@ -7,8 +7,8 @@
 #include <boost/filesystem.hpp>
 
 #define MAX_ITERATIONS						200
-#define MAX_ITERATIONS_FOR_ESTIMATE			100
-#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	200
+#define MAX_ITERATIONS_FOR_ESTIMATE			5//100
+#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	10
 #define MAX_LEVEL							6
 
 namespace parametriclsystem {
@@ -16,9 +16,6 @@ namespace parametriclsystem {
 const double M_PI = 3.141592653592;
 
 Literal::Literal(char c, int level) {
-	if (level > 10) {
-		int xx =0;
-	}
 	this->c = c;
 	this->level = level;
 	this->param_value = 0.0;
@@ -133,7 +130,8 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 	String result = start_model;
 	TreeNode* node = root;
 
-	for (int iter = 0; iter < max_iterations; ++iter) {
+	//for (int iter = 0; iter < max_iterations; ++iter) {
+	for (int iter = 0; ; ++iter) {
 		// 展開するパラメータを決定
 		int i = findNextLiteralToDefineValue(result);
 
@@ -143,14 +141,21 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 		if (rules.find(result[i].c) != rules.end()) {
 			int index = chooseRule(result[i]);
 
+			// もしmax_iterationsを超えたら、X->Fにする
+			if (iter > max_iterations) {
+				index = 0;
+			}
+
 			if (build_tree) {
 				node = node->getChild(result[i].c, result[i].level + 1, index);
 			}
 
 			result.replace(i, String(rules[result[i].c][index], result[i].level + 1));
 		} else if (result[i].c == 'F') {
-			//double val = ml::genRandInt(10, 50, 5);
-			double val = ml::genRandInt(grid_size * 0.5 / (result[i].level + 1) * 0.8, grid_size * 0.5 / (result[i].level + 1) * 1.2, 3);
+			//double mean_val = grid_size * 0.5 / (result[i].level + 1);
+			//double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
+			double mean_val = grid_size * 0.15;
+			double val = ml::genRandInt(mean_val * 0.8, mean_val * 1.2, 3);
 			result[i] = Literal(result[i].c, result[i].level, val);
 			if (build_tree) {
 				node = node->getChild(result[i].c, result[i].level, val);
@@ -213,10 +218,11 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを推定
 				cv::Mat indicator;
-				estimateIndicator(next, scale, indicator);
+				estimateIndicator(next, scale, target, indicator);
 
 				// distanceを計算
-				double dist = distance(indicator, target, 0);
+				ml::mat_save("hoge.png", indicator);
+				double dist = distance(indicator, target);
 
 				if (dist < min_dist) {
 					min_dist = dist;
@@ -230,8 +236,11 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 			double min_dist = std::numeric_limits<double>::max();
 					 
 			for (int k = 0; k < 3; ++k) {
-				double val = grid_size * 0.5 / (result[i].level + 1) * (0.8 + 0.2 * k);
-				//double val = (30.0 / (result[i].level + 1) - 1.0) / 4 * k + 1.0;
+				//double mean_val = grid_size * 0.5 / (result[i].level + 1);
+				//double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
+				double mean_val = grid_size * 0.15;
+				//double val = grid_size * 0.5 / (result[i].level + 1) * (0.8 + 0.2 * k);
+				double val = mean_val * (0.8 + 0.2 * k);
 
 				// この値を選択した時のモデルを生成
 				String next = result;
@@ -239,10 +248,10 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを計算
 				cv::Mat indicator;
-				estimateIndicator(next, scale, indicator);
+				estimateIndicator(next, scale, target, indicator);
 
 				// distanceを計算
-				double dist = distance(indicator, target, 0);
+				double dist = distance(indicator, target);
 
 				if (dist < min_dist) {
 					min_dist = dist;
@@ -261,10 +270,10 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを計算
 				cv::Mat indicator;
-				estimateIndicator(next, scale, indicator);
+				estimateIndicator(next, scale, target, indicator);
 
 				// distanceを計算
-				double dist = distance(indicator, target, 0);
+				double dist = distance(indicator, target);
 
 				if (dist < min_dist) {
 					min_dist = dist;
@@ -372,26 +381,29 @@ void ParametricLSystem::computeIndicator(String rule, float scale, cv::Mat& indi
 }
 
 /**
- * 指定されたモデルからスタートして、ランダムにいくつかサンプルを生成し、indicatorを加重平均して計算する。
+ * 指定されたモデルからスタートして、ランダムにいくつかサンプルを生成し、ターゲットに最も近いindicatorを返却する。
  *
  * @param start_model		開始モデル
  * @param scale				grid_size * scaleのサイズで、indicatorを計算する
+ * @param target			ターゲットindicator
  * @param indicator [OUT]	indicator
  */
-void ParametricLSystem::estimateIndicator(const String start_model, float scale, cv::Mat& indicator) {
+void ParametricLSystem::estimateIndicator(const String start_model, float scale, const cv::Mat& target, cv::Mat& indicator) {
 	int size = grid_size * scale;
 
-	indicator = cv::Mat::zeros(size, size, indicator_data_type);
 	int N = NUM_RANDOM_GENERATION_FOR_ESTIMATE;
 
+	double min_dist = std::numeric_limits<double>::max();
 	for (int i = 0; i < N; ++i) {
 		cv::Mat ind;
 		derive(start_model, i, MAX_ITERATIONS_FOR_ESTIMATE, false, ind);
 
-		indicator += ind;
+		double dist = distance(ind, target);
+		if (dist < min_dist) {
+			min_dist = dist;
+			indicator = ind.clone();
+		}
 	}
-
-	indicator /= (double)N;
 }
 
 /**
@@ -402,8 +414,8 @@ void ParametricLSystem::estimateIndicator(const String start_model, float scale,
  * @param indicator [OUT]	生成されたモデルのindicator
  * @return					生成されたモデル
  */
-String ParametricLSystem::inverse(const cv::Mat& target, double threshold, cv::Mat& indicator) {
-	TreeNode* node = traverseTree(root, target, threshold);
+String ParametricLSystem::inverse(const cv::Mat& target, cv::Mat& indicator) {
+	TreeNode* node = traverseTree(root, target);
 
 	computeIndicator(node->model, scale, indicator);
 	ml::mat_save("start_model.png", indicator);
@@ -422,7 +434,7 @@ String ParametricLSystem::inverse(const cv::Mat& target, double threshold, cv::M
  * @param threshold		しきい値
  * @return				距離
  */
-double ParametricLSystem::distance(const cv::Mat& indicator, const cv::Mat& target, double threshold) {
+double ParametricLSystem::distance(const cv::Mat& indicator, const cv::Mat& target) {
 	double dist = 0.0;
 
 	for (int r = 0; r < target.rows; ++r) {
@@ -623,7 +635,7 @@ void ParametricLSystem::saveSubIndicatorImages(TreeNode* node, int depth, int ma
  * @param threshold		しきい値
  * @return				もっともターゲットに近いノード
  */
-TreeNode* ParametricLSystem::traverseTree(TreeNode* node, const cv::Mat& target, double threshold) {
+TreeNode* ParametricLSystem::traverseTree(TreeNode* node, const cv::Mat& target) {
 	int node_type = 0;
 	int count = 0;
 	for (auto it = node->children.begin(); it != node->children.end(); ++it) {
@@ -647,14 +659,14 @@ TreeNode* ParametricLSystem::traverseTree(TreeNode* node, const cv::Mat& target,
 	for (auto it = node->children.begin(); it != node->children.end(); ++it) {
 		TreeNode* child = it->second;
 
-		double dist = distance(child->indicator, target, threshold);
+		double dist = distance(child->indicator, target);
 		if (dist < min_dist) {
 			min_dist = dist;
 			min_child = child;
 		}
 	}
 
-	return traverseTree(min_child, target, threshold);
+	return traverseTree(min_child, target);
 }
 
 /*

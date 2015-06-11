@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
 	// ターゲットに近いモデルを生成する
 	cv::Mat indicator;
-	parametriclsystem::String model = pls.inverse(target_density, 0.1, indicator);
+	parametriclsystem::String model = pls.inverse(target_density, indicator);
 	ml::mat_save("result.png", indicator);
 	cout << "Resulting model:" << endl;
 	cout << model << endl;
