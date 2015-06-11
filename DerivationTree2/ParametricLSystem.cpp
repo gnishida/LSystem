@@ -6,10 +6,9 @@
 #include <list>
 #include <boost/filesystem.hpp>
 
-#define MAX_ITERATIONS						200
-#define MAX_ITERATIONS_FOR_ESTIMATE			10//100
-#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	30
-#define MAX_LEVEL							6
+#define MAX_ADDITIONAL_DEPTH_FOR_ESTIMATE	5
+#define NUM_RANDOM_GENERATION_FOR_ESTIMATE	200
+#define MAX_DEPTH							6
 
 namespace parametriclsystem {
 
@@ -111,7 +110,7 @@ ParametricLSystem::ParametricLSystem(int grid_size, int indicator_data_type, flo
  */
 String ParametricLSystem::derive(int random_seed) {
 	cv::Mat indicator;
-	return derive(String(axiom, 0), random_seed, MAX_ITERATIONS, true, indicator);
+	return derive(String(axiom, 0), random_seed, MAX_DEPTH, true, indicator);
 }
 
 /**
@@ -119,12 +118,12 @@ String ParametricLSystem::derive(int random_seed) {
  *
  * @param start_model		開始モデル
  * @param random_seed		乱数シード
- * @param max_iterations	繰り返し数
+ * @param max_depth			最大深さ
  * @param build_tree		木を生成するか？
  * @param indicator [OUT]	生成されたモデルのindicator
  * @return					生成されたモデル
  */
-String ParametricLSystem::derive(const String& start_model, int random_seed, int max_iterations, bool build_tree, cv::Mat& indicator) {
+String ParametricLSystem::derive(const String& start_model, int random_seed, int max_depth, bool build_tree, cv::Mat& indicator) {
 	srand(random_seed);
 
 	String result = start_model;
@@ -141,8 +140,8 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 		if (rules.find(result[i].c) != rules.end()) {
 			int index = chooseRule(result[i]);
 
-			// もしmax_iterationsを超えたら、X->Fにする
-			if (iter > max_iterations) {
+			// もしmax_depth以上ら、X->Fにする
+			if (result[i].level >= max_depth) {
 				index = 0;
 			}
 
@@ -153,8 +152,8 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 			result.replace(i, String(rules[result[i].c][index], result[i].level + 1));
 		} else if (result[i].c == 'F') {
 			//double mean_val = grid_size * 0.5 / (result[i].level + 1);
-			//double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
-			double mean_val = grid_size * 0.15;
+			double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
+			//double mean_val = grid_size * 0.15;
 			double val = ml::genRandInt(mean_val * 0.8, mean_val * 1.2, 3);
 			result[i] = Literal(result[i].c, result[i].level, val);
 			if (build_tree) {
@@ -185,15 +184,16 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 /**
  * 指定されたモデルからスタートし、ターゲットに近づくようモデルをgenerateする。
  *
- * @param model				初期モデル
+ * @param start_model		初期モデル
+ * @param max_depth			最大深さ
  * @target					ターゲット
  * @indicator [OUT]			生成されたモデルのindicator
  * @return					生成されたモデル
  */
-String ParametricLSystem::derive(const String& start_model, int max_iterations, const cv::Mat& target, cv::Mat& indicator) {
+String ParametricLSystem::derive(const String& start_model, int max_depth, const cv::Mat& target, cv::Mat& indicator) {
 	String result = start_model;
 
-	for (int iter = 0; iter < max_iterations; ++iter) {
+	for (int iter = 0; ; ++iter) {
 		String min_next;
 
 		// 展開するパラメータを決定
@@ -212,7 +212,7 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを推定
 				cv::Mat indicator;
-				estimateIndicator(next, scale, target, indicator);
+				estimateIndicator(next, scale, result[i].level + 1 + MAX_ADDITIONAL_DEPTH_FOR_ESTIMATE, target, indicator);
 
 				// distanceを計算
 				ml::mat_save("hoge.png", indicator);
@@ -223,16 +223,16 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 					min_next = next;
 				}
 
-				// レベルがMAX_LEVELなら、X->Fのみ
-				if (result[i].level >= MAX_LEVEL) break;
+				// もしmax_depth以上ら、X->Fにする
+				if (result[i].level >= max_depth) break;
 			}
 		} else if (result[i].c == 'F') {
 			double min_dist = std::numeric_limits<double>::max();
 					 
 			for (int k = 0; k < 3; ++k) {
 				//double mean_val = grid_size * 0.5 / (result[i].level + 1);
-				//double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
-				double mean_val = grid_size * 0.15;
+				double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
+				//double mean_val = grid_size * 0.15;
 				//double val = grid_size * 0.5 / (result[i].level + 1) * (0.8 + 0.2 * k);
 				double val = mean_val * (0.8 + 0.2 * k);
 
@@ -242,7 +242,7 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを計算
 				cv::Mat indicator;
-				estimateIndicator(next, scale, target, indicator);
+				estimateIndicator(next, scale, result[i].level + MAX_ADDITIONAL_DEPTH_FOR_ESTIMATE, target, indicator);
 
 				// distanceを計算
 				double dist = distance(indicator, target);
@@ -264,7 +264,7 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを計算
 				cv::Mat indicator;
-				estimateIndicator(next, scale, target, indicator);
+				estimateIndicator(next, scale, result[i].level + MAX_ADDITIONAL_DEPTH_FOR_ESTIMATE, target, indicator);
 
 				// distanceを計算
 				double dist = distance(indicator, target);
@@ -382,7 +382,7 @@ void ParametricLSystem::computeIndicator(String rule, float scale, cv::Mat& indi
  * @param target			ターゲットindicator
  * @param indicator [OUT]	indicator
  */
-void ParametricLSystem::estimateIndicator(const String start_model, float scale, const cv::Mat& target, cv::Mat& indicator) {
+void ParametricLSystem::estimateIndicator(const String start_model, float scale, int max_depth, const cv::Mat& target, cv::Mat& indicator) {
 	int size = grid_size * scale;
 
 	int N = NUM_RANDOM_GENERATION_FOR_ESTIMATE;
@@ -390,7 +390,7 @@ void ParametricLSystem::estimateIndicator(const String start_model, float scale,
 	double min_dist = std::numeric_limits<double>::max();
 	for (int i = 0; i < N; ++i) {
 		cv::Mat ind;
-		derive(start_model, i, MAX_ITERATIONS_FOR_ESTIMATE, false, ind);
+		derive(start_model, i, max_depth, false, ind);
 
 		double dist = distance(ind, target);
 		if (dist < min_dist) {
@@ -417,7 +417,7 @@ String ParametricLSystem::inverse(const cv::Mat& target, cv::Mat& indicator) {
 	cout << "Start model:" << endl;
 	cout << node->model << endl;
 		
-	return derive(node->model, MAX_ITERATIONS, target, indicator);
+	return derive(node->model, MAX_DEPTH, target, indicator);
 }
 
 /**
