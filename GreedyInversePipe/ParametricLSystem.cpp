@@ -3,13 +3,13 @@
 #include <time.h>
 #include <algorithm>
 #include "MLUtils.h"
+#include "GLUtils.h"
 #include <list>
-#include <boost/filesystem.hpp>
+#include <QGLWidget>
 
-#define MAX_ITERATIONS						200
-#define MAX_ITERATIONS_FOR_ESTIMATE			10//100
+#define MAX_ITERATIONS						20 // 200
+#define MAX_ITERATIONS_FOR_ESTIMATE			14 //20//100
 #define NUM_RANDOM_GENERATION_FOR_ESTIMATE	30
-#define MAX_LEVEL							6
 
 namespace parametriclsystem {
 
@@ -88,19 +88,49 @@ TreeNode* TreeNode::getChild(char c, int level, double value) {
 	return children[value];
 }
 
-ParametricLSystem::ParametricLSystem(int grid_size, int indicator_data_type, float scale) {
-	this->grid_size = grid_size;
-	this->indicator_data_type = indicator_data_type;
-	this->scale = scale;
+ParametricLSystem::ParametricLSystem() {
+	grid_size = 50;
 
 	axiom = "X";
-	rules['X'].push_back("F");
-	rules['X'].push_back("F[-X][+X]");
-	//rules['X'].push_back(Rule("F[-F]"));
+	rules['X'].push_back("F[+X]");
+	rules['X'].push_back("F[-X]");
+	rules['X'].push_back("F[\\X]");
+	rules['X'].push_back("F[/X]");
+	//rules['X'].push_back("FX");
+	rules['X'].push_back("F[+X][-X]");
+	rules['X'].push_back("F[\\X][/X]");
 
 	// ルートノードを作成
 	root = new TreeNode(Literal('#', 0), NULL);
 	root->model = String(axiom, 0);
+}
+
+void ParametricLSystem::draw(const String& model) {
+	for (int i = 0; i < model.length(); ++i) {
+		if (model[i].c == '[') {
+			glPushMatrix();
+		} else if (model[i].c == ']') {
+			glPopMatrix();
+		} else if (model[i].c == '+') {
+			glRotatef(model[i].param_value, 1, 0, 0);
+		} else if (model[i].c == '-') {
+			glRotatef(-model[i].param_value, 1, 0, 0);
+		} else if (model[i].c == '\\') {
+			glRotatef(model[i].param_value, 0, 1, 0);
+		} else if (model[i].c == '/') {
+			glRotatef(-model[i].param_value, 0, 1, 0);
+		} else if (model[i].c == 'F') {
+			double length = model[i].param_value;
+			
+			// 線を描画する
+			glutils::drawSphere(glm::vec3(0, 0, 0), 1);
+			glutils::drawCylinder(glm::vec3(0, 0, 0), length, 1);
+
+			glTranslatef(0, 0, length);
+		} else if (model[i].c == 'X') {
+		} else {
+		}
+	}
 }
 
 /**
@@ -141,9 +171,9 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 		if (rules.find(result[i].c) != rules.end()) {
 			int index = chooseRule(result[i]);
 
-			// もしmax_iterationsを超えたら、X->Fにする
-			if (iter > max_iterations) {
-				index = 0;
+			// もしmax_levelを超えたら、終了する
+			if (iter >= max_iterations) {
+				break;
 			}
 
 			if (build_tree) {
@@ -152,20 +182,14 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 
 			result.replace(i, String(rules[result[i].c][index], result[i].level + 1));
 		} else if (result[i].c == 'F') {
-			//double mean_val = grid_size * 0.5 / (result[i].level + 1);
-			double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
-			//double mean_val = grid_size * 0.15;
-			double val = ml::genRandInt(mean_val * 0.8, mean_val * 1.2, 3);
+			double mean_val = 5.0;
+			double val = ml::genRandInt(mean_val * 0.5, mean_val * 1.5, 5);
 			result[i] = Literal(result[i].c, result[i].level, val);
 			if (build_tree) {
 				node = node->getChild(result[i].c, result[i].level, val);
 			}
-		} else if (result[i].c == '-' || result[i].c == '+') {
-			double val = ml::genRandInt(10, 60, 3);
-			result[i] = Literal(result[i].c, result[i].level, val);
-			if (build_tree) {
-				node = node->getChild(result[i].c, result[i].level, val);
-			}
+		} else if (result[i].c == '+' || result[i].c == '-' || result[i].c == '\\' || result[i].c == '/') {
+			result[i] = Literal(result[i].c, result[i].level, 90);
 		}
 
 		node->model = result;
@@ -173,10 +197,10 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 
 	// indicatorを計算する
 	if (build_tree) {
-		computeIndicator(result, scale, node->indicator);
+		computeIndicator(result, node->indicator);
 		indicator = node->indicator.clone();
 	} else {
-		computeIndicator(result, scale, indicator);
+		computeIndicator(result, indicator);
 	}
 
 	return result;
@@ -194,6 +218,8 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 	String result = start_model;
 
 	for (int iter = 0; iter < max_iterations; ++iter) {
+		cout << iter << endl;
+
 		String min_next;
 
 		// 展開するパラメータを決定
@@ -212,7 +238,7 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを推定
 				cv::Mat indicator;
-				estimateIndicator(next, scale, target, indicator);
+				estimateIndicator(next, MAX_ITERATIONS_FOR_ESTIMATE, scale, target, indicator);
 
 				// distanceを計算
 				//ml::mat_save("hoge.png", indicator);
@@ -222,19 +248,16 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 					min_dist = dist;
 					min_next = next;
 				}
-
-				// レベルがMAX_LEVELなら、X->Fのみ
-				if (result[i].level >= MAX_LEVEL) break;
 			}
 		} else if (result[i].c == 'F') {
 			double min_dist = std::numeric_limits<double>::max();
 					 
-			for (int k = 0; k < 3; ++k) {
+			for (int k = 0; k < 5; ++k) {
 				//double mean_val = grid_size * 0.5 / (result[i].level + 1);
-				double mean_val = grid_size * 0.5 / pow(1.5, result[i].level);
+				double mean_val = 5.0;
 				//double mean_val = grid_size * 0.15;
 				//double val = grid_size * 0.5 / (result[i].level + 1) * (0.8 + 0.2 * k);
-				double val = mean_val * (0.8 + 0.2 * k);
+				double val = mean_val * (0.5 + 0.25 * k);
 
 				// この値を選択した時のモデルを生成
 				String next = result;
@@ -242,9 +265,10 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 
 				// indicatorを計算
 				cv::Mat indicator;
-				estimateIndicator(next, scale, target, indicator);
+				estimateIndicator(next, MAX_ITERATIONS_FOR_ESTIMATE, scale, target, indicator);
 
 				// distanceを計算
+				//ml::mat_save("hoge.png", indicator);
 				double dist = distance(indicator, target);
 
 				if (dist < min_dist) {
@@ -252,34 +276,17 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 					min_next = next;
 				}
 			}
-		} else if (result[i].c == '-' || result[i].c == '+') {
-			double min_dist = std::numeric_limits<double>::max();
-					 
-			for (int k = 0; k < 3; ++k) {
-				double val = k * 25.0 + 10.0;
-
-				// この値を選択した時のモデルを生成
-				String next = result;
-				next[i] = Literal(result[i].c, result[i].level, val);
-
-				// indicatorを計算
-				cv::Mat indicator;
-				estimateIndicator(next, scale, target, indicator);
-
-				// distanceを計算
-				double dist = distance(indicator, target);
-
-				if (dist < min_dist) {
-					min_dist = dist;
-					min_next = next;
-				}
-			}
+		} else if (result[i].c == '-' || result[i].c == '+' || result[i].c == '\\' || result[i].c == '/') {
+			min_next = result;
+			min_next[i] = Literal(result[i].c, result[i].level, 90);
 		}
 
 		result = min_next;
 	}
 
-	computeIndicator(result, scale, indicator);
+	computeIndicator(result, indicator);
+
+	ml::mat_save("indicator.png", indicator);
 
 	return result;
 }
@@ -308,9 +315,6 @@ void ParametricLSystem::gatherIndicators(int gather_type) {
  * @param min_threshold		0より大きい値を指定した場合、この値より小さい値は0、以上の値は1とする
  */
 void ParametricLSystem::saveIndicatorImages(int max_depth, float min_threshold) {
-	boost::filesystem::path dir("images");
-	boost::filesystem::create_directory(dir);
-
 	saveSubIndicatorImages(root, 0, max_depth, min_threshold);
 }
 
@@ -321,10 +325,10 @@ void ParametricLSystem::saveIndicatorImages(int max_depth, float min_threshold) 
  * @param scale				grid_size * scaleのサイズでindicatorを計算する
  * @param indicator [OUT]	indicator
  */
-void ParametricLSystem::computeIndicator(String rule, float scale, cv::Mat& indicator) {
-	int size = grid_size * scale;
+void ParametricLSystem::computeIndicator(String rule, cv::Mat& indicator) {
+	int size = 50;
 
-	indicator = cv::Mat::zeros(size, size, indicator_data_type);
+	indicator = cv::Mat::zeros(size, size, CV_8U);
 
 	std::list<glm::mat4> stack;
 
@@ -337,38 +341,48 @@ void ParametricLSystem::computeIndicator(String rule, float scale, cv::Mat& indi
 			modelMat = stack.back();
 			stack.pop_back();
 		} else if (rule[i].c == '+') {
-			modelMat = glm::rotate(modelMat, deg2rad(rule[i].param_value), glm::vec3(0, 0, 1));
+			modelMat = glm::rotate(modelMat, deg2rad(rule[i].param_value), glm::vec3(1, 0, 0));
 		} else if (rule[i].c == '-') {
-			modelMat = glm::rotate(modelMat, deg2rad(-rule[i].param_value), glm::vec3(0, 0, 1));
+			modelMat = glm::rotate(modelMat, deg2rad(-rule[i].param_value), glm::vec3(1, 0, 0));
+		} else if (rule[i].c == '\\') {
+			modelMat = glm::rotate(modelMat, deg2rad(rule[i].param_value), glm::vec3(0, 1, 0));
+		} else if (rule[i].c == '/') {
+			modelMat = glm::rotate(modelMat, deg2rad(-rule[i].param_value), glm::vec3(0, 1, 0));
 		} else if (rule[i].c == 'F') {
-			double length = rule[i].param_value * scale;
+			if (rule[i].param_defined) {
+				double length = rule[i].param_value;
 			
+				// 線を描画する代わりに、indicatorを更新する
+				glm::vec4 p1(0, 0, 0, 1);
+				glm::vec4 p2(0, 0, length, 1);
+				p1 = modelMat * p1;
+				p2 = modelMat * p2;
+				int u1 = p1.x + size * 0.5 + 0.5;
+				int v1 = p1.z + size * 0.5 + 0.5;
+				int u2 = p2.x + size * 0.5 + 0.5;
+				int v2 = p2.z + size * 0.5 + 0.5;
+				int thickness = 1;//max(1.0, 3.0 * scale);
+				cv::line(indicator, cv::Point(u1, v1), cv::Point(u2, v2), cv::Scalar(1), thickness);
+
+				modelMat = glm::translate(modelMat, glm::vec3(0, 0, length));
+			}
+		} else if (rule[i].c == 'X') {
+			/*double length = 5.0;
+
 			// 線を描画する代わりに、indicatorを更新する
 			glm::vec4 p1(0, 0, 0, 1);
-			glm::vec4 p2(0, length, 0, 1);
+			glm::vec4 p2(0, 0, length, 1);
 			p1 = modelMat * p1;
 			p2 = modelMat * p2;
 			int u1 = p1.x + size * 0.5 + 0.5;
-			int v1 = p1.y + 0.5;
+			int v1 = p1.z + size * 0.5 + 0.5;
 			int u2 = p2.x + size * 0.5 + 0.5;
-			int v2 = p2.y + 0.5;
-			int thickness = max(1.0, 3.0 * scale);
+			int v2 = p2.z + size * 0.5 + 0.5;
+			int thickness = 1;//max(1.0, 3.0 * scale);
 			cv::line(indicator, cv::Point(u1, v1), cv::Point(u2, v2), cv::Scalar(1), thickness);
 
-			/*
-			for (float y = 0.0f; y <= length; y += 0.1f) {
-				glm::vec4 p(0, y, 0, 1);
-				p = modelMat * p;
-
-				int c = p.x + size * 0.5 + 0.5;
-				int r = p.y + 0.5;
-				if (c >= 0 && c < size && r >= 0 && r < size) {
-					ml::mat_set_value(indicator, r, c, 1);
-				}
-			}
+			modelMat = glm::translate(modelMat, glm::vec3(0, 0, length));
 			*/
-
-			modelMat = glm::translate(modelMat, glm::vec3(0, length, 0));
 		} else {
 		}
 	}
@@ -382,7 +396,7 @@ void ParametricLSystem::computeIndicator(String rule, float scale, cv::Mat& indi
  * @param target			ターゲットindicator
  * @param indicator [OUT]	indicator
  */
-void ParametricLSystem::estimateIndicator(const String start_model, float scale, const cv::Mat& target, cv::Mat& indicator) {
+void ParametricLSystem::estimateIndicator(const String start_model, int max_iterations, float scale, const cv::Mat& target, cv::Mat& indicator) {
 	int size = grid_size * scale;
 
 	int N = NUM_RANDOM_GENERATION_FOR_ESTIMATE;
@@ -390,7 +404,9 @@ void ParametricLSystem::estimateIndicator(const String start_model, float scale,
 	double min_dist = std::numeric_limits<double>::max();
 	for (int i = 0; i < N; ++i) {
 		cv::Mat ind;
-		derive(start_model, i, MAX_ITERATIONS_FOR_ESTIMATE, false, ind);
+		derive(start_model, i, max_iterations, false, ind);
+
+		//ml::mat_save("ind.png", ind);
 
 		double dist = distance(ind, target);
 		if (dist < min_dist) {
@@ -411,7 +427,7 @@ void ParametricLSystem::estimateIndicator(const String start_model, float scale,
 String ParametricLSystem::inverse(const cv::Mat& target, cv::Mat& indicator) {
 	TreeNode* node = traverseTree(root, target);
 
-	computeIndicator(node->model, scale, indicator);
+	computeIndicator(node->model, indicator);
 	ml::mat_save("start_model.png", indicator);
 	cout << "===================================" << endl;
 	cout << "Start model:" << endl;
@@ -437,9 +453,17 @@ double ParametricLSystem::distance(const cv::Mat& indicator, const cv::Mat& targ
 			double val = ml::mat_get_value(indicator, r, c);
 
 			if (target_val > 0) {
-				dist -= val * 100;
+				if (val > 0) {
+					dist -= 1;
+				} else {
+					dist += 0;
+				}
 			} else {
-				dist += val * 10;
+				if (val > 0) {
+					dist += 1.5;
+				} else {
+					dist -= 0;
+				}
 			}
 		}
 	}
@@ -487,7 +511,7 @@ int ParametricLSystem::findNextLiteralToDefineValue(const String& str) {
 				min_level1 = str[i].level;
 				min_index1 = i;
 			}
-		} else if ((str[i].c == 'F' || str[i].c == '+' || str[i].c == '-') && !str[i].param_defined) {
+		} else if ((str[i].c == 'F' || str[i].c == '+' || str[i].c == '-' || str[i].c == '\\' || str[i].c == '/') && !str[i].param_defined) {
 			if (str[i].level < min_level2) {
 				min_level2 = str[i].level;
 				min_index2 = i;
@@ -671,6 +695,10 @@ TreeNode* ParametricLSystem::traverseTree(TreeNode* node, const cv::Mat& target)
  * @reutnr			選択されたルール
  */
 int ParametricLSystem::chooseRule(const Literal& non_terminal) {
+	// uniform確率で、適用するルールを決定する
+	return rand() % rules[non_terminal.c].size();
+
+	/*
 	// ハードコーディング
 	// 深さ6を超えたら、X->Fとする
 	if (non_terminal.level > 6) return 0;
@@ -682,7 +710,7 @@ int ParametricLSystem::chooseRule(const Literal& non_terminal) {
 	} else {
 		return 1;
 	}
-
+	*/
 
 
 	//return rand() % rules[non_terminal.c].size();
