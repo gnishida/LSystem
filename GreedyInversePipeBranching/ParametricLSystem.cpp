@@ -7,11 +7,11 @@
 #include <list>
 #include <QGLWidget>
 
-#define MAX_ITERATIONS						300 // 200
-#define MAX_ITERATIONS_FOR_ESTIMATE			5
+#define MAX_ITERATIONS						500 // 200
+#define MAX_ITERATIONS_FOR_ESTIMATE			10
 #define NUM_RANDOM_GENERATION_FOR_ESTIMATE	100
 
-#define ALPHA								1.0
+#define ALPHA								1.5
 #define BETA								1.0
 
 //#define DEBUG		1
@@ -102,7 +102,7 @@ ParametricLSystem::ParametricLSystem() {
 	rules['X'].push_back("F\\X");
 	rules['X'].push_back("F/X");
 	//rules['X'].push_back("F[+X][-X]");
-	//rules['X'].push_back("F[\\X][/X]");
+	rules['X'].push_back("F[\\X][/X]");
 
 	// ルートノードを作成
 	root = new TreeNode(Literal('#', 0), NULL);
@@ -711,7 +711,10 @@ TreeNode* ParametricLSystem::traverseTree(TreeNode* node, const cv::Mat& target)
  */
 int ParametricLSystem::chooseRule(const Literal& non_terminal) {
 	// uniform確率で、適用するルールを決定する
-	return rand() % rules[non_terminal.c].size();
+	int r = ml::genRand(0, 7);
+	if (r < 3) return 0;
+	if (r < 6) return 1;
+	else return 2;
 
 	/*
 	// ハードコーディング

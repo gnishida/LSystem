@@ -7,12 +7,12 @@
 #include <list>
 #include <QGLWidget>
 
-#define MAX_ITERATIONS						300 // 200
-#define MAX_ITERATIONS_FOR_ESTIMATE			5
+#define MAX_ITERATIONS						500 // 200
+#define MAX_ITERATIONS_FOR_ESTIMATE			1
 #define NUM_RANDOM_GENERATION_FOR_ESTIMATE	100
 
 #define ALPHA								1.0
-#define BETA								1.0
+#define BETA								2.0
 
 //#define DEBUG		1
 
@@ -97,12 +97,12 @@ ParametricLSystem::ParametricLSystem() {
 	grid_size = 50;
 
 	axiom = "X";
-	//rules['X'].push_back("F+X");
-	//rules['X'].push_back("F-X");
+	rules['X'].push_back("F+X");
+	rules['X'].push_back("F-X");
 	rules['X'].push_back("F\\X");
 	rules['X'].push_back("F/X");
-	//rules['X'].push_back("F[+X][-X]");
-	//rules['X'].push_back("F[\\X][/X]");
+	rules['X'].push_back("F[+X][-X]");
+	rules['X'].push_back("F[\\X][/X]");
 
 	// ルートノードを作成
 	root = new TreeNode(Literal('#', 0), NULL);
@@ -171,6 +171,10 @@ String ParametricLSystem::derive(const String& start_model, int random_seed, int
 
 	//for (int iter = 0; iter < max_iterations; ++iter) {
 	for (int iter = 0; ; ++iter) {
+		// 衝突チェック用のvoxelデータ
+		//const int sizes[] = {50, 50, 50};
+		//cv::Mat_<uchar> voxel = cv::Mat_<uchar>::zeros(3, sizes);
+
 		// 展開するパラメータを決定
 		int i = findNextLiteralToDefineValue(result);
 
@@ -238,7 +242,11 @@ String ParametricLSystem::derive(const String& start_model, int max_iterations, 
 		if (rules.find(result[i].c) != rules.end()) {
 			double min_dist = std::numeric_limits<double>::max();
 
+			bool useBranching = ml::genRand() < 0.1 ? true : false;
 			for (int k = 0; k < rules[result[i].c].size(); ++k) {
+				// 分岐ルールは、10%の確率で実施
+				if (k > 4 && !useBranching) continue;
+
 				// この値を選択した時のモデルを作成
 				String next = result;
 				next.replace(i, String(rules[result[i].c][k], result[i].level + 1));
@@ -711,7 +719,13 @@ TreeNode* ParametricLSystem::traverseTree(TreeNode* node, const cv::Mat& target)
  */
 int ParametricLSystem::chooseRule(const Literal& non_terminal) {
 	// uniform確率で、適用するルールを決定する
-	return rand() % rules[non_terminal.c].size();
+	int r = ml::genRand(0, 22);
+	if (r < 5) return 0;
+	if (r < 10) return 1;
+	if (r < 15) return 2;
+	if (r < 20) return 3;
+	if (r < 21) return 4;
+	else return 5;
 
 	/*
 	// ハードコーディング
