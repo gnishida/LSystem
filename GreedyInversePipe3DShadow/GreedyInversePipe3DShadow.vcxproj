@@ -130,6 +130,7 @@
     <ClCompile Include="..\..\codebase\GLUtils.cpp" />
     <ClCompile Include="..\..\codebase\MLUtils.cpp" />
     <ClCompile Include="..\..\codebase\OBJLoader.cpp" />
+    <ClCompile Include="..\..\codebase\Shader.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_MainWindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -153,7 +154,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="ParametricLSystem.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMapping.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -201,12 +201,12 @@
     <ClInclude Include="..\..\codebase\GLUtils.h" />
     <ClInclude Include="..\..\codebase\MLUtils.h" />
     <ClInclude Include="..\..\codebase\OBJLoader.h" />
+    <ClInclude Include="..\..\codebase\Shader.h" />
     <ClInclude Include="..\..\codebase\Vertex.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GeneratedFiles\ui_MainWindow.h" />
     <ClInclude Include="GLWidget3D.h" />
     <ClInclude Include="ParametricLSystem.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMapping.h" />
   </ItemGroup>
   <ItemGroup>

@@ -65,9 +65,6 @@
     <ClCompile Include="ParametricLSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ShadowMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,6 +75,9 @@
       <Filter>Source Files\codebase</Filter>
     </ClCompile>
     <ClCompile Include="..\..\codebase\OBJLoader.cpp">
+      <Filter>Source Files\codebase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\codebase\Shader.cpp">
       <Filter>Source Files\codebase</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,9 +105,6 @@
     <ClInclude Include="ParametricLSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ShadowMapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -121,6 +118,9 @@
       <Filter>Source Files\codebase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\codebase\OBJLoader.h">
+      <Filter>Source Files\codebase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\codebase\Shader.h">
       <Filter>Source Files\codebase</Filter>
     </ClInclude>
   </ItemGroup>

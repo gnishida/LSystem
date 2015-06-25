@@ -132,7 +132,7 @@ void ParametricLSystem::draw(const String& model) {
 				double length = model[i].param_value;
 			
 				// 線を描画する
-				glutils::drawSphere(glm::vec3(0, 0, 0), 1);
+				glutils::drawSphere(glm::vec3(0, 0, 0), 1, glm::vec3(1, 1, 1));
 				glutils::drawCylinder(glm::vec3(0, 0, 0), length, 1, glm::vec3(1, 1, 1));
 
 				glTranslatef(0, 0, length);
