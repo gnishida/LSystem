@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreedyInversePipeBranching"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreedyInversePipe3D", "GreedyInversePipe3D\GreedyInversePipe3D.vcxproj", "{F839F8A3-199B-4A8E-9352-1166ADFD1371}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreedyInversePipe3DShadow", "GreedyInversePipe3DShadow\GreedyInversePipe3DShadow.vcxproj", "{F179AAB0-0724-457F-8999-F415E848A33F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -86,11 +88,17 @@ Global
 		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Debug|Win32.Build.0 = Debug|Win32
 		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Debug|x64.ActiveCfg = Debug|x64
-		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Debug|x64.Build.0 = Debug|x64
 		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Release|Win32.ActiveCfg = Release|Win32
 		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Release|Win32.Build.0 = Release|Win32
 		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Release|x64.ActiveCfg = Release|x64
-		{F839F8A3-199B-4A8E-9352-1166ADFD1371}.Release|x64.Build.0 = Release|x64
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Debug|Win32.Build.0 = Debug|Win32
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Debug|x64.ActiveCfg = Debug|x64
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Debug|x64.Build.0 = Debug|x64
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Release|Win32.ActiveCfg = Release|Win32
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Release|Win32.Build.0 = Release|Win32
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Release|x64.ActiveCfg = Release|x64
+		{F179AAB0-0724-457F-8999-F415E848A33F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
